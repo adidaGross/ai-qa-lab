@@ -1,0 +1,170 @@
+{
+  "description": "Answer key: the bugs planted on purpose in QA Shop. The AI must NEVER read this file. It is only used afterwards to score how well the AI did.",
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "title": "Cart total ignores quantity",
+      "test": "cart total multiplies price by quantity",
+      "category": "functional",
+      "severity": "critical",
+      "file": "site/app.js",
+      "location": "cartTotal()",
+      "expected": "Total = sum of price x quantity",
+      "actual": "Total = sum of price only (quantity ignored)"
+    },
+    {
+      "id": "BUG-002",
+      "title": "Discount code SAVE10 gives 1% instead of 10%",
+      "test": "discount code SAVE10 gives 10% off",
+      "category": "functional",
+      "severity": "high",
+      "file": "site/app.js",
+      "location": "apply-discount click handler",
+      "expected": "discountRate = 0.10",
+      "actual": "discountRate = 0.01"
+    },
+    {
+      "id": "BUG-003",
+      "title": "Search is case-sensitive",
+      "test": "search finds products regardless of capitalization",
+      "category": "functional",
+      "severity": "medium",
+      "file": "site/app.js",
+      "location": "search input handler",
+      "expected": "Searching 'mug' finds 'Coffee Mug'",
+      "actual": "No results unless capitalization matches exactly"
+    },
+    {
+      "id": "BUG-004",
+      "title": "Remove button deletes the wrong cart item",
+      "test": "remove deletes the clicked item",
+      "category": "functional",
+      "severity": "high",
+      "file": "site/app.js",
+      "location": "removeFromCart()",
+      "expected": "cart.splice(index, 1)",
+      "actual": "cart.splice(index + 1, 1) removes the next item"
+    },
+    {
+      "id": "BUG-005",
+      "title": "Quantity can go to zero or negative",
+      "test": "quantity cannot go below 1",
+      "category": "validation",
+      "severity": "medium",
+      "file": "site/app.js",
+      "location": "changeQuantity()",
+      "expected": "Quantity never below 1 (or item is removed at 0)",
+      "actual": "Clicking '-' keeps going: 0, -1, -2 and the total goes negative"
+    },
+    {
+      "id": "BUG-006",
+      "title": "Email validation accepts invalid emails",
+      "test": "checkout rejects an email without @",
+      "category": "validation",
+      "severity": "medium",
+      "file": "site/app.js",
+      "location": "isValidEmail()",
+      "expected": "Requires something@something.something",
+      "actual": "Any text containing a dot is accepted, e.g. 'hello.world'"
+    },
+    {
+      "id": "BUG-007",
+      "title": "Missing product returns 200 instead of 404",
+      "test": "GET missing product returns 404",
+      "category": "api",
+      "severity": "medium",
+      "file": "src/server.ts",
+      "location": "GET /api/products/:id",
+      "expected": "404 with an error message",
+      "actual": "200 with an empty object {}"
+    },
+    {
+      "id": "BUG-008",
+      "title": "Login accepts any password",
+      "test": "login fails with a wrong password",
+      "category": "security",
+      "severity": "critical",
+      "file": "src/server.ts",
+      "location": "POST /api/login",
+      "expected": "Both username and password must match",
+      "actual": "Only the username is checked"
+    },
+    {
+      "id": "BUG-009",
+      "title": "Search message is vulnerable to XSS",
+      "test": "search shows user input as plain text",
+      "category": "security",
+      "severity": "high",
+      "file": "site/app.js",
+      "location": "search input handler (innerHTML)",
+      "expected": "User input shown as plain text (textContent)",
+      "actual": "User input inserted as HTML, so <img src=x onerror=alert(1)> runs"
+    },
+    {
+      "id": "BUG-010",
+      "title": "Password field has no label",
+      "test": "password field has an accessible label",
+      "category": "accessibility",
+      "severity": "low",
+      "file": "site/index.html",
+      "location": "#password input",
+      "expected": "A <label for=\"password\"> or aria-label",
+      "actual": "Screen readers announce an unnamed field"
+    },
+    {
+      "id": "BUG-011",
+      "title": "Expired 2FA codes are accepted",
+      "test": "an expired 2FA code is rejected",
+      "category": "security",
+      "severity": "high",
+      "file": "src/account.ts",
+      "location": "isValidCode()",
+      "expected": "Only the current 30-second code (plus one window either side for clock drift) is accepted",
+      "actual": "Codes from the last 10 minutes are accepted (20 windows back), so a stolen or old code still works"
+    },
+    {
+      "id": "BUG-012",
+      "title": "Signing out does not end the session on the server",
+      "test": "signing out ends the session on the server",
+      "category": "security",
+      "severity": "high",
+      "file": "src/account.ts",
+      "location": "POST /api/account/logout",
+      "expected": "Logout deletes the server-side session, so the old session cookie stops working",
+      "actual": "Logout only clears the cookie in the browser; a copied session cookie keeps working"
+    },
+    {
+      "id": "BUG-013",
+      "title": "2FA codes can be guessed: no real attempt limit",
+      "test": "2FA code guessing is blocked after 5 wrong codes",
+      "category": "security",
+      "severity": "high",
+      "file": "src/account.ts",
+      "location": "MAX_CODE_ATTEMPTS",
+      "expected": "After 5 wrong codes the sign-in is cancelled (429)",
+      "actual": "The limit is 50, so an attacker gets 50 guesses per password sign-in"
+    },
+    {
+      "id": "BUG-014",
+      "title": "Error responses leak stack traces and file paths",
+      "test": "error responses do not reveal server internals",
+      "category": "security",
+      "severity": "medium",
+      "file": "src/server.ts",
+      "location": "error handler",
+      "expected": "A short JSON error without internals",
+      "actual": "The JSON error includes err.stack: server file paths and library names"
+    },
+    {
+      "id": "BUG-015",
+      "title": "Password hashing blocks the whole server",
+      "test": "browsing stays fast while many users sign in",
+      "category": "performance",
+      "severity": "high",
+      "file": "src/account.ts",
+      "location": "POST /api/account/login",
+      "expected": "Hash passwords with the async crypto.scrypt, so other requests keep being served",
+      "actual": "crypto.scryptSync blocks the event loop; during many sign-ins every other request waits (p95 over 1 s)"
+    }
+  ]
+}

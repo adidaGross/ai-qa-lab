@@ -1,0 +1,94 @@
+# Publishes the portfolio website to GitHub Pages.
+#
+#  - On every push to main: rebuild the site with the recording that is already in the repo (free).
+#  - "Run workflow" button (Actions tab -> Publish site) with "Record a new run" ticked:
+#    runs the REAL full flow with the ANTHROPIC_API_KEY secret (~$0.50), saves it as the
+#    new recording, commits it, and publishes the site. Only people with write access to
+#    the repo (you) can press this button, so visitors can never spend your credits.
+
+name: Publish site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      record_new_run:
+        description: "Record a new run with the AI (uses the ANTHROPIC_API_KEY secret, ~$0.50)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write # to commit a new recording
+  pages: write # to publish the site
+  id-token: write # required by the Pages deploy action
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # The AI layer is the private ai-qa package. A read-only deploy key (secret AI_QA_DEPLOY_KEY)
+      # lets npm download it; it can read that one repository and nothing else.
+      - name: Access the private ai-qa package
+        shell: bash
+        env:
+          DEPLOY_KEY: ${{ secrets.AI_QA_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/ai_qa
+          chmod 600 ~/.ssh/ai_qa
+          git config --global core.sshCommand "ssh -i ~/.ssh/ai_qa -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git config --global url."ssh://git@github.com/adidaGross/ai-qa.git".insteadOf "https://github.com/adidaGross/ai-qa.git"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        if: ${{ inputs.record_new_run }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the full AI flow
+        if: ${{ inputs.record_new_run }}
+        env:
+          AI_MODE: api # the live site always uses the Claude API (locally the default is your subscription)
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run verify-fixes
+
+      - name: Save and commit the new recording
+        if: ${{ inputs.record_new_run }}
+        run: |
+          npm run recording:save
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add portfolio/recording
+          git commit -m "Update recorded run [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Build the website
+        run: npm run portfolio:build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

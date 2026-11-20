@@ -1,0 +1,17 @@
+node_modules/
+test-results/
+playwright-report/
+reports/
+.env
+dist/
+.bench/
+
+# ai-qa output and the Python demo environment
+/ai-qa-report/
+examples/**/.venv/
+examples/**/__pycache__/
+examples/**/.pytest_cache/
+examples/**/results/
+
+# local editor/preview settings
+.claude/

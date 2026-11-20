@@ -1,0 +1,480 @@
+{
+  "recordedAt": "2026-11-20T07:30:49.492Z",
+  "model": "claude-opus-5-5",
+  "aiMode": "max",
+  "costUsd": 1.1329182,
+  "stats": {
+    "passed": 14,
+    "failed": 23
+  },
+  "tests": [
+    {
+      "title": "GET /api/products returns 5 products",
+      "file": "tests/api/products-api.spec.ts",
+      "status": "passed",
+      "durationMs": 19,
+      "error": ""
+    },
+    {
+      "title": "GET product by id returns that product",
+      "file": "tests/api/products-api.spec.ts",
+      "status": "failed",
+      "durationMs": 11,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality"
+    },
+    {
+      "title": "GET missing product returns 404",
+      "file": "tests/api/products-api.spec.ts",
+      "status": "failed",
+      "durationMs": 20,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality"
+    },
+    {
+      "title": "2FA sign-in works with a code from the authenticator app",
+      "file": "tests/auth/account.spec.ts",
+      "status": "passed",
+      "durationMs": 227,
+      "error": ""
+    },
+    {
+      "title": "a wrong 2FA code is rejected",
+      "file": "tests/auth/account.spec.ts",
+      "status": "passed",
+      "durationMs": 195,
+      "error": ""
+    },
+    {
+      "title": "an expired 2FA code is rejected",
+      "file": "tests/auth/account.spec.ts",
+      "status": "failed",
+      "durationMs": 2212,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "account page shows the signed-in user after 2FA",
+      "file": "tests/auth/account.spec.ts",
+      "status": "failed",
+      "durationMs": 2225,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "passkey sign-in works after creating a passkey",
+      "file": "tests/auth/account.spec.ts",
+      "status": "passed",
+      "durationMs": 406,
+      "error": ""
+    },
+    {
+      "title": "a passkey the site does not know cannot sign in",
+      "file": "tests/auth/account.spec.ts",
+      "status": "passed",
+      "durationMs": 162,
+      "error": ""
+    },
+    {
+      "title": "a saved session opens the account without signing in again",
+      "file": "tests/auth/account.spec.ts",
+      "status": "passed",
+      "durationMs": 129,
+      "error": ""
+    },
+    {
+      "title": "signing out ends the session on the server",
+      "file": "tests/auth/account.spec.ts",
+      "status": "failed",
+      "durationMs": 128,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality"
+    },
+    {
+      "title": "the product API handles 30 users at once",
+      "file": "tests/load/load.spec.ts",
+      "status": "passed",
+      "durationMs": 3455,
+      "error": ""
+    },
+    {
+      "title": "browsing stays fast while many users sign in",
+      "file": "tests/load/load.spec.ts",
+      "status": "failed",
+      "durationMs": 3415,
+      "error": "Error: 95% of product requests must answer within 150 ms during the sign-ins. Browsing: 81 requests (27/s), 0 errors, p50 150 ms, p95 459 ms, max 1188 ms. Sign-"
+    },
+    {
+      "title": "pages send basic browser security headers",
+      "file": "tests/security/security.spec.ts",
+      "status": "passed",
+      "durationMs": 13,
+      "error": ""
+    },
+    {
+      "title": "API responses disable content-type sniffing",
+      "file": "tests/security/security.spec.ts",
+      "status": "failed",
+      "durationMs": 8,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality"
+    },
+    {
+      "title": "the session cookie cannot be read by scripts or sent from other sites",
+      "file": "tests/security/security.spec.ts",
+      "status": "passed",
+      "durationMs": 37,
+      "error": ""
+    },
+    {
+      "title": "creating a passkey requires a signed-in user",
+      "file": "tests/security/security.spec.ts",
+      "status": "passed",
+      "durationMs": 3,
+      "error": ""
+    },
+    {
+      "title": "2FA code guessing is blocked after 5 wrong codes",
+      "file": "tests/security/security.spec.ts",
+      "status": "failed",
+      "durationMs": 38,
+      "error": "Error: 6th attempt must be refused"
+    },
+    {
+      "title": "error responses do not reveal server internals",
+      "file": "tests/security/security.spec.ts",
+      "status": "failed",
+      "durationMs": 21,
+      "error": "Error: the error response contains server file paths (node_modules)"
+    },
+    {
+      "title": "adding a product shows it in the cart",
+      "file": "tests/ui/cart.spec.ts",
+      "status": "passed",
+      "durationMs": 181,
+      "error": ""
+    },
+    {
+      "title": "cart total multiplies price by quantity",
+      "file": "tests/ui/cart.spec.ts",
+      "status": "failed",
+      "durationMs": 2176,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "discount code SAVE10 gives 10% off",
+      "file": "tests/ui/cart.spec.ts",
+      "status": "failed",
+      "durationMs": 2249,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "remove deletes the clicked item",
+      "file": "tests/ui/cart.spec.ts",
+      "status": "failed",
+      "durationMs": 2226,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "quantity cannot go below 1",
+      "file": "tests/ui/cart.spec.ts",
+      "status": "failed",
+      "durationMs": 2213,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "checkout with an empty cart shows an error",
+      "file": "tests/ui/checkout.spec.ts",
+      "status": "passed",
+      "durationMs": 197,
+      "error": ""
+    },
+    {
+      "title": "checkout succeeds for a customer email",
+      "file": "tests/ui/checkout.spec.ts",
+      "status": "failed",
+      "durationMs": 2174,
+      "error": "Error: expect(locator).toContainText(expected) failed"
+    },
+    {
+      "title": "order confirmation shows the customer's email",
+      "file": "tests/ui/checkout.spec.ts",
+      "status": "failed",
+      "durationMs": 2231,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "checkout rejects an email without @",
+      "file": "tests/ui/checkout.spec.ts",
+      "status": "failed",
+      "durationMs": 2203,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "login fails for an unknown user",
+      "file": "tests/ui/login.spec.ts",
+      "status": "passed",
+      "durationMs": 613,
+      "error": ""
+    },
+    {
+      "title": "login succeeds with correct credentials",
+      "file": "tests/ui/login.spec.ts",
+      "status": "failed",
+      "durationMs": 187,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality"
+    },
+    {
+      "title": "login fails with a wrong password",
+      "file": "tests/ui/login.spec.ts",
+      "status": "failed",
+      "durationMs": 2181,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "password field has an accessible label",
+      "file": "tests/ui/login.spec.ts",
+      "status": "failed",
+      "durationMs": 2087,
+      "error": "Error: expect(locator).toHaveAccessibleName(expected) failed"
+    },
+    {
+      "title": "shows all 5 products",
+      "file": "tests/ui/products.spec.ts",
+      "status": "passed",
+      "durationMs": 122,
+      "error": ""
+    },
+    {
+      "title": "shows product names in the list",
+      "file": "tests/ui/products.spec.ts",
+      "status": "failed",
+      "durationMs": 2100,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "shows the correct price for Notebook",
+      "file": "tests/ui/products.spec.ts",
+      "status": "failed",
+      "durationMs": 2134,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "search finds products regardless of capitalization",
+      "file": "tests/ui/products.spec.ts",
+      "status": "failed",
+      "durationMs": 2123,
+      "error": "Error: expect(locator).toHaveText(expected) failed"
+    },
+    {
+      "title": "search shows user input as plain text",
+      "file": "tests/ui/products.spec.ts",
+      "status": "failed",
+      "durationMs": 2119,
+      "error": "Error: expect(locator).toContainText(expected) failed"
+    }
+  ],
+  "analysis": [
+    {
+      "title": "GET product by id returns that product",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The test calls the wrong URL (/api/product/2 instead of /api/products/2), so the server correctly answers 404 Not Found."
+    },
+    {
+      "title": "GET missing product returns 404",
+      "classification": "app-bug",
+      "severity": "medium",
+      "category": "api",
+      "summary": "When someone asks the shop's API for a product that doesn't exist, it says \"OK\" (200) and sends back an empty object when it should say \"not found\" (404)."
+    },
+    {
+      "title": "an expired 2FA code is rejected",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "security",
+      "summary": "The server accepts 2FA codes up to 10 minutes old, so a code from 5 minutes ago still signs the user in when it should be rejected."
+    },
+    {
+      "title": "account page shows the signed-in user after 2FA",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The test types in a fixed 2FA code (\"492039\"), but these codes change every 30 seconds, so the server correctly rejects it and the user is never signed in."
+    },
+    {
+      "title": "signing out ends the session on the server",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "security",
+      "summary": "Signing out only deletes the cookie in the browser and leaves the session active on the server, so a copied session cookie still works after logout."
+    },
+    {
+      "title": "browsing stays fast while many users sign in",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "performance",
+      "summary": "Each sign-in hashes the password in a way that stalls the whole server, so product browsing slows down for everyone while people log in."
+    },
+    {
+      "title": "API responses disable content-type sniffing",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The shop does send the anti-sniffing header on API responses, but the test looks it up with capital letters, and Playwright always stores header names in lowercase, so it finds nothing."
+    },
+    {
+      "title": "2FA code guessing is blocked after 5 wrong codes",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "security",
+      "summary": "The server allows 50 wrong 2FA codes before blocking instead of 5, so attackers can brute-force the 6-digit code far more easily than intended."
+    },
+    {
+      "title": "error responses do not reveal server internals",
+      "classification": "app-bug",
+      "severity": "medium",
+      "category": "security",
+      "summary": "When the server gets a broken request, its error message includes the full internal stack trace and file paths, which gives attackers details about how the server is built."
+    },
+    {
+      "title": "cart total multiplies price by quantity",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "functional",
+      "summary": "The cart total ignores item quantities, so two Coffee Mugs are charged as one ($12.50 instead of $25.00)."
+    },
+    {
+      "title": "discount code SAVE10 gives 10% off",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "functional",
+      "summary": "The SAVE10 discount code takes off only 1% instead of 10%, so customers pay $39.50 for a $39.90 lamp when they should pay $35.91."
+    },
+    {
+      "title": "remove deletes the clicked item",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "functional",
+      "summary": "Clicking \"Remove\" on a cart item deletes the item after it, so the wrong product gets removed from the cart."
+    },
+    {
+      "title": "quantity cannot go below 1",
+      "classification": "app-bug",
+      "severity": "medium",
+      "category": "validation",
+      "summary": "In the cart, the \"-\" button keeps lowering the quantity past 1, so the cart can show 0 or negative quantities."
+    },
+    {
+      "title": "checkout succeeds for a customer email",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The test enters an invalid email (\"customer@example\", with no domain ending like .com), so the shop correctly refuses the order."
+    },
+    {
+      "title": "order confirmation shows the customer's email",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The test clicks \"Place order\" before it adds a product to the cart, so the shop correctly says \"Your cart is empty\"."
+    },
+    {
+      "title": "checkout rejects an email without @",
+      "classification": "app-bug",
+      "severity": "medium",
+      "category": "validation",
+      "summary": "The checkout accepts email addresses without an \"@\" (like \"hello.world\") because its email check only looks for a dot."
+    },
+    {
+      "title": "login succeeds with correct credentials",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The test reads the login message right after clicking \"Log in\" and doesn't wait for the server's reply, so it sees an empty message before \"Welcome, admin!\" shows up."
+    },
+    {
+      "title": "login fails with a wrong password",
+      "classification": "app-bug",
+      "severity": "critical",
+      "category": "security",
+      "summary": "You can log in as \"admin\" with any password at all, because the server only checks that the username exists and never checks the password."
+    },
+    {
+      "title": "password field has an accessible label",
+      "classification": "app-bug",
+      "severity": "medium",
+      "category": "accessibility",
+      "summary": "The password box in the header login form has no label, so screen readers can't tell users what the field is for."
+    },
+    {
+      "title": "shows product names in the list",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The test looks for a page element called \"product-title\", but the shop labels product names as \"product-name\", so the test never finds anything even though the names show up correctly."
+    },
+    {
+      "title": "shows the correct price for Notebook",
+      "classification": "test-bug",
+      "severity": null,
+      "category": null,
+      "summary": "The test expects the wrong Notebook price ($4.57 has two digits swapped). The shop correctly shows the real price of $4.75."
+    },
+    {
+      "title": "search finds products regardless of capitalization",
+      "classification": "app-bug",
+      "severity": "medium",
+      "category": "functional",
+      "summary": "Product search only matches exact capitals, so searching \"mug\" doesn't find \"Coffee Mug\"."
+    },
+    {
+      "title": "search shows user input as plain text",
+      "classification": "app-bug",
+      "severity": "high",
+      "category": "security",
+      "summary": "The search \"no results\" message puts the user's search text into the page as HTML. Anyone who can control the search text can run their own script in the page (XSS)."
+    }
+  ],
+  "healing": [
+    {
+      "title": "GET product by id returns that product",
+      "healedFile": "tests/healed/api/products-api.spec.ts",
+      "status": "passed"
+    },
+    {
+      "title": "account page shows the signed-in user after 2FA",
+      "healedFile": "tests/healed/auth/account.spec.ts",
+      "status": "passed"
+    },
+    {
+      "title": "API responses disable content-type sniffing",
+      "healedFile": "tests/healed/security/security.spec.ts",
+      "status": "passed"
+    },
+    {
+      "title": "checkout succeeds for a customer email",
+      "healedFile": "tests/healed/ui/checkout.spec.ts",
+      "status": "passed"
+    },
+    {
+      "title": "order confirmation shows the customer's email",
+      "healedFile": "tests/healed/ui/checkout.spec.ts",
+      "status": "passed"
+    },
+    {
+      "title": "login succeeds with correct credentials",
+      "healedFile": "tests/healed/ui/login.spec.ts",
+      "status": "passed"
+    },
+    {
+      "title": "shows product names in the list",
+      "healedFile": "tests/healed/ui/products.spec.ts",
+      "status": "passed"
+    },
+    {
+      "title": "shows the correct price for Notebook",
+      "healedFile": "tests/healed/ui/products.spec.ts",
+      "status": "passed"
+    }
+  ],
+  "score": {
+    "correct": 23,
+    "total": 23
+  }
+}

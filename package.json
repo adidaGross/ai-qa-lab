@@ -1,0 +1,59 @@
+{
+  "name": "ai-qa-lab",
+  "version": "1.0.0",
+  "description": "Buggy demo shop + AI-powered test analysis and self-healing",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "test": "playwright test --project=main",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc",
+    "report": "playwright show-report reports/html",
+    "ai:check": "tsx ai/check-connection.ts",
+    "ai:set-key": "tsx scripts/set-key.ts",
+    "ai:analyze": "tsx ai/analyze.ts",
+    "ai:score": "tsx ai/score.ts",
+    "ai:heal": "tsx ai/heal.ts",
+    "test:healed": "playwright test --project=healed",
+    "verify-fixes": "tsx ai/verify-fixes.ts",
+    "ai:report": "tsx ai/report.ts",
+    "screenshots": "tsx scripts/screenshots.ts",
+    "clean:reports": "tsx ai/clean-reports.ts",
+    "test:baseline": "tsx ai/check-baseline.ts",
+    "recording:save": "tsx scripts/save-recording.ts",
+    "portfolio:build": "tsx scripts/build-portfolio.ts",
+    "portfolio:preview": "tsx scripts/preview-portfolio.ts",
+    "bench": "tsx benchmark/run.ts",
+    "bench:report": "tsx benchmark/report.ts",
+    "bench:basic": "tsx benchmark/run.ts --level basic --cases 60 --seed 42",
+    "bench:hard": "tsx benchmark/run.ts --level hard --cases 100 --seed 42",
+    "bench:basic:compare": "tsx benchmark/run.ts --level basic --cases 60 --seed 42 --configs opus:full,sonnet:full,haiku:full,opus:minimal,haiku:minimal",
+    "bench:hard:compare": "tsx benchmark/run.ts --level hard --cases 100 --seed 42 --configs opus:full,sonnet:full,haiku:full,opus:minimal,haiku:minimal",
+    "bench:mutation": "tsx benchmark/run.ts --level basic --cases 60 --seed 42 --skip-ai",
+    "bench:mutation:hard": "tsx benchmark/run.ts --level hard --cases 100 --seed 42 --skip-ai",
+    "bench:reports": "tsx benchmark/report.ts --level basic && tsx benchmark/report.ts --level hard"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Elastic-2.0",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "marked": "^18.2.1",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.9.0",
+    "@simplewebauthn/server": "^14.1.0",
+    "express": "^5.3.0",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "optionalDependencies": {
+    "ai-qa": "github:adidaGross/ai-qa#v0.1.0"
+  }
+}

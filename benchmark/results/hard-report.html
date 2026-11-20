@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mutation Benchmark (hard)</title>
+<style>
+  :root { --bg:#f6f7f9; --surface:#fff; --text:#1d2330; --muted:#5d6676; --border:#e3e6eb; --code:#f1f3f6; --accent:#3b5bff; --ok:#2e9d5b; --bad:#d64545; --warn:#d98a1c; --del:#fdecec; --add:#e8f6ee; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#12151b; --surface:#1b2029; --text:#e6e9ef; --muted:#9aa3b2; --border:#2c3340; --code:#151a22; --accent:#7b93ff; --ok:#3fb871; --bad:#ef6b6b; --warn:#f0a540; --del:#3a1e22; --add:#18332a; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif; }
+  .wrap { max-width:1040px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { margin:0 0 4px; font-size:28px; } h2 { font-size:20px; margin:36px 0 6px; } h3 { font-size:16px; margin:20px 0 8px; }
+  .muted, .lead { color:var(--muted); } .lead { margin:0 0 14px; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:20px; }
+  .kpi { background:var(--surface); border:1px solid var(--border); border-top:4px solid var(--accent); border-radius:12px; padding:14px 16px; }
+  .kpi.ok { border-top-color:var(--ok); } .kpi.warn { border-top-color:var(--warn); }
+  .kpi-label, .kpi-note { color:var(--muted); font-size:13px; } .kpi-value { font-size:30px; font-weight:700; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .bar-row { display:grid; grid-template-columns:minmax(120px,240px) 1fr 56px; gap:10px; align-items:center; margin:6px 0; font-size:14px; }
+  .bar-track { height:12px; background:var(--code); border-radius:999px; overflow:hidden; }
+  .bar-fill { height:100%; background:var(--ok); border-radius:999px; } .bar-fill.warn { background:var(--warn); }
+  .bar-value { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
+  .table-wrap { overflow-x:auto; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } th, td { padding:8px 12px; border-bottom:1px solid var(--border); text-align:left; }
+  .confusion td { text-align:center; font-weight:700; font-variant-numeric:tabular-nums; } .confusion td.hit { color:var(--ok); } .confusion td.miss { color:var(--bad); }
+  .config { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:12px; }
+  .config > summary { cursor:pointer; font-size:16px; }
+  .item { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:10px; }
+  .tag { font-size:12px; font-weight:700; border-radius:6px; padding:2px 8px; background:var(--code); color:var(--muted); margin-right:6px; }
+  pre.diff { background:var(--code); border-radius:8px; padding:10px 12px; overflow-x:auto; margin:8px 0 0; font:13px/1.5 ui-monospace,Menlo,monospace; }
+  .del { background:var(--del); display:inline-block; min-width:100%; } .add { background:var(--add); display:inline-block; min-width:100%; }
+  details.all summary { cursor:pointer; color:var(--accent); }
+  dl.details { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px 20px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin:0; }
+  dl.details dt { color:var(--muted); font-size:13px; } dl.details dd { margin:2px 0 0; font-weight:600; }
+  dl.details dd small { display:block; color:var(--muted); font-weight:400; font-size:13px; }
+  .small { font-size:13px; }
+</style></head>
+<body><div class="wrap">
+  <h1>Mutation Benchmark: hard level</h1>
+  <p class="muted">18 Nov 2026, 10:04 · 83 mutants from 103 candidates (seed 42) · 35 min</p>
+
+  <p class="lead">Starting from a clean version of the shop (all planted bugs fixed, all tests passing), each mutant adds one small change, either to the app (truth: <i>app bug</i>) or to a test (truth: <i>test bug</i>). <b>Hard level:</b> the changes are designed to look like the other kind of problem: subtle app bugs (wrong field, boundary, missing await, weakened validation, order of statements) and plausible test mistakes (checking a real but wrong element, using another real product, a believable wrong number, swapped steps). The AI triages every failure without knowing the truth.</p>
+
+  <div class="kpis">
+    <div class="kpi ok"><div class="kpi-label">AI accuracy (opus:full)</div><div class="kpi-value">100.0%</div><div class="kpi-note">115/115 · 95% range 96.8%–100.0%</div></div>
+    <div class="kpi warn"><div class="kpi-label">Mutation score</div><div class="kpi-value">72.7%</div><div class="kpi-note">24/33 app changes caught by the tests</div></div>
+    <div class="kpi "><div class="kpi-label">Test changes detected</div><div class="kpi-value">29/50</div><div class="kpi-note">test mutants that made a test fail</div></div>
+  </div>
+
+  
+  <h2>Run details</h2>
+  <dl class="details">
+    <div><dt>Mutants</dt><dd>83<small>33 app · 50 test · from 103 candidates (seed 42)</small></dd></div>
+    <div><dt>Caught by the tests</dt><dd>24/33 app · 29/50 test<small>30 changed nothing any test checks</small></dd></div>
+    <div><dt>Test failures judged</dt><dd>115<small>by each of 5 configuration(s)</small></dd></div>
+    <div><dt>AI calls</dt><dd>575<small>effort &quot;medium&quot;, 4 at a time</small></dd></div>
+    <div><dt>Total run time</dt><dd>35 min<small>tests + all AI configurations</small></dd></div>
+    <div><dt>Cost</dt><dd>$0 billed<small>Claude subscription · API equivalent $11.69</small></dd></div>
+  </dl>
+  <p class="muted small">Run on a Claude subscription through Claude Code, so nothing was billed. API cost = what the same calls would cost at Claude API list prices (per million tokens: Opus 5.5 $4 in / $20 out, Sonnet 5.5 $2 / $10, Haiku 5.5 $0.10 / $0.50), as reported by Claude Code. Claude Code adds its own instructions to every call, so a direct API integration would cost less.</p>
+  
+  <h2>Configurations compared</h2>
+  <p class="lead">The same 115 test failures, judged by each model, with the app's code ("full" context) or with only the test and the error ("minimal" context). <b>Accuracy</b> counts every failure; a call that returned no valid answer counts as wrong. <b>Answered</b> and <b>accuracy when answered</b> separate a model's reliability from its judgment.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Config</th><th>Accuracy</th><th>95% range</th><th>Answered</th><th>Accuracy when answered</th><th>App bugs</th><th>Test bugs</th><th>Avg time</th><th>Cost</th><th>Per 1,000 failures</th></tr></thead>
+    <tbody><tr><td><b>opus:full</b></td><td><b>100.0%</b> (115/115)</td><td>96.8%–100.0%</td>
+          <td>115/115</td><td>100.0% (115/115)</td>
+          <td>86/86</td><td>29/29</td>
+          <td>12.5 s</td>
+          <td>$0 billed (API equiv. $4.65)</td><td>$40.40</td></tr><tr><td><b>sonnet:full</b></td><td><b>100.0%</b> (115/115)</td><td>96.8%–100.0%</td>
+          <td>115/115</td><td>100.0% (115/115)</td>
+          <td>86/86</td><td>29/29</td>
+          <td>5.8 s</td>
+          <td>$0 billed (API equiv. $2.15)</td><td>$18.67</td></tr><tr><td><b>haiku:full</b></td><td><b>64.3%</b> (74/115)</td><td>55.3%–72.5%</td>
+          <td>77/115</td><td>96.1% (74/77)</td>
+          <td>53/86</td><td>21/29</td>
+          <td>11.4 s</td>
+          <td>$0 billed (API equiv. $0.175)</td><td>$1.52</td></tr><tr><td><b>opus:minimal</b></td><td><b>73.0%</b> (84/115)</td><td>64.3%–80.3%</td>
+          <td>115/115</td><td>73.0% (84/115)</td>
+          <td>58/86</td><td>26/29</td>
+          <td>17.0 s</td>
+          <td>$0 billed (API equiv. $4.56)</td><td>$39.64</td></tr><tr><td><b>haiku:minimal</b></td><td><b>47.0%</b> (54/115)</td><td>38.1%–56.0%</td>
+          <td>90/115</td><td>60.0% (54/90)</td>
+          <td>34/86</td><td>20/29</td>
+          <td>12.6 s</td>
+          <td>$0 billed (API equiv. $0.167)</td><td>$1.45</td></tr></tbody></table></div>
+  <h2>Details per configuration</h2>
+  <details class="config" open>
+    <summary><b>opus:full</b>: 100.0% accurate, 0 mistakes</summary>
+    <h3>Confusion matrix</h3>
+  <div class="table-wrap"><table class="confusion">
+    <thead><tr><th>Truth ↓ / AI said →</th><th>app bug</th><th>test bug</th><th>environment</th><th>error</th></tr></thead>
+    <tbody><tr><th>app bug</th><td class="hit">86</td><td class="">0</td><td class="">0</td><td class="">0</td></tr><tr><th>test bug</th><td class="">0</td><td class="hit">29</td><td class="">0</td><td class="">0</td></tr></tbody></table></div>
+    <h3>Accuracy by type of change</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">app: missing await</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">31/31</div></div>
+    <div class="bar-row"><div class="bar-label">app: wrong field</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">30/30</div></div>
+    <div class="bar-row"><div class="bar-label">app: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">13/13</div></div>
+    <div class="bar-row"><div class="bar-label">test: checks wrong element</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">12/12</div></div>
+    <div class="bar-row"><div class="bar-label">app: boundary change</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">10/10</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong product used</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">9/9</div></div>
+    <div class="bar-row"><div class="bar-label">test: plausible wrong number</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">4/4</div></div>
+    <div class="bar-row"><div class="bar-label">app: weakened validation</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div>
+    <div class="bar-row"><div class="bar-label">test: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong letter case</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div></div>
+    <h3>Accuracy by the confidence the AI reported</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">high</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">115/115</div></div></div>
+    <h3>Mistakes (0)</h3>
+    <p class="lead">None.</p>
+  </details>
+  <details class="config" >
+    <summary><b>sonnet:full</b>: 100.0% accurate, 0 mistakes</summary>
+    <h3>Confusion matrix</h3>
+  <div class="table-wrap"><table class="confusion">
+    <thead><tr><th>Truth ↓ / AI said →</th><th>app bug</th><th>test bug</th><th>environment</th><th>error</th></tr></thead>
+    <tbody><tr><th>app bug</th><td class="hit">86</td><td class="">0</td><td class="">0</td><td class="">0</td></tr><tr><th>test bug</th><td class="">0</td><td class="hit">29</td><td class="">0</td><td class="">0</td></tr></tbody></table></div>
+    <h3>Accuracy by type of change</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">app: missing await</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">31/31</div></div>
+    <div class="bar-row"><div class="bar-label">app: wrong field</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">30/30</div></div>
+    <div class="bar-row"><div class="bar-label">app: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">13/13</div></div>
+    <div class="bar-row"><div class="bar-label">test: checks wrong element</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">12/12</div></div>
+    <div class="bar-row"><div class="bar-label">app: boundary change</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">10/10</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong product used</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">9/9</div></div>
+    <div class="bar-row"><div class="bar-label">test: plausible wrong number</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">4/4</div></div>
+    <div class="bar-row"><div class="bar-label">app: weakened validation</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div>
+    <div class="bar-row"><div class="bar-label">test: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong letter case</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div></div>
+    <h3>Accuracy by the confidence the AI reported</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">high</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">114/114</div></div>
+    <div class="bar-row"><div class="bar-label">medium</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">1/1</div></div></div>
+    <h3>Mistakes (0)</h3>
+    <p class="lead">None.</p>
+  </details>
+  <details class="config" >
+    <summary><b>haiku:full</b>: 64.3% accurate, 41 mistakes</summary>
+    <h3>Confusion matrix</h3>
+  <div class="table-wrap"><table class="confusion">
+    <thead><tr><th>Truth ↓ / AI said →</th><th>app bug</th><th>test bug</th><th>environment</th><th>error</th></tr></thead>
+    <tbody><tr><th>app bug</th><td class="hit">53</td><td class="">0</td><td class="miss">3</td><td class="miss">30</td></tr><tr><th>test bug</th><td class="">0</td><td class="hit">21</td><td class="">0</td><td class="miss">8</td></tr></tbody></table></div>
+    <h3>Accuracy by type of change</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">test: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:0.0%"></div></div>
+      <div class="bar-value">0/2</div></div>
+    <div class="bar-row"><div class="bar-label">app: wrong field</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:46.7%"></div></div>
+      <div class="bar-value">14/30</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong letter case</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:50.0%"></div></div>
+      <div class="bar-value">1/2</div></div>
+    <div class="bar-row"><div class="bar-label">app: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:61.5%"></div></div>
+      <div class="bar-value">8/13</div></div>
+    <div class="bar-row"><div class="bar-label">app: missing await</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:67.7%"></div></div>
+      <div class="bar-value">21/31</div></div>
+    <div class="bar-row"><div class="bar-label">test: checks wrong element</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:75.0%"></div></div>
+      <div class="bar-value">9/12</div></div>
+    <div class="bar-row"><div class="bar-label">test: plausible wrong number</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:75.0%"></div></div>
+      <div class="bar-value">3/4</div></div>
+    <div class="bar-row"><div class="bar-label">app: boundary change</div>
+      <div class="bar-track"><div class="bar-fill " style="width:80.0%"></div></div>
+      <div class="bar-value">8/10</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong product used</div>
+      <div class="bar-track"><div class="bar-fill " style="width:88.9%"></div></div>
+      <div class="bar-value">8/9</div></div>
+    <div class="bar-row"><div class="bar-label">app: weakened validation</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div></div>
+    <h3>Accuracy by the confidence the AI reported</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">none</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:0.0%"></div></div>
+      <div class="bar-value">0/38</div></div>
+    <div class="bar-row"><div class="bar-label">medium</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:0.0%"></div></div>
+      <div class="bar-value">0/3</div></div>
+    <div class="bar-row"><div class="bar-label">high</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">74/74</div></div></div>
+    <h3>Mistakes (41)</h3>
+    <div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “checkout rejects an email without @”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:20308,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;bdb26695-aa02-4090-9bf7-43b8787f1ba9&quot;,&quot;total_cost_usd&quot;:0.00382315,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5757,&quot;cache_read_input_tokens&quot;:29295,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16664,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;93363e71-354b-4390-99ff-cf6b8ca64d81&quot;,&quot;total_cost_usd&quot;:0.00340333,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5356,&quot;cache_read_input_tokens&quot;:29033,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows all 5 products”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:12732,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;21034948-0d12-4d1b-90d4-a6d85ceb7d14&quot;,&quot;total_cost_usd&quot;:0.00269084,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4241,&quot;cache_read_input_tokens&quot;:27184,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:14448,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;5a8cb138-c81f-4cf5-a7a2-6776f995f1ea&quot;,&quot;total_cost_usd&quot;:0.0029275,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4595,&quot;cache_read_input_tokens&quot;:27470,&quot;output_tokens</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M007</span><span class="tag">app: boundary change</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “search shows user input as plain text”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16702,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;ccb6589f-8c28-49a7-bdd4-63b01e411f7d&quot;,&quot;total_cost_usd&quot;:0.00388618,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:8654,&quot;cache_read_input_tokens&quot;:24658,&quot;output_token</div><pre class="diff"><span class="del">- found.length === 0 ? `No results for &quot;${term}&quot;` : &quot;&quot;;</span>
+<span class="add">+ found.length === 1 ? `No results for &quot;${term}&quot;` : &quot;&quot;;</span></pre><div class="muted">site/app.js:38</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “checkout succeeds for a customer email”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15641,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;8381c2de-6a53-4d58-acc6-63df649d4915&quot;,&quot;total_cost_usd&quot;:0.0031163000000000002,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4868,&quot;cache_read_input_tokens&quot;:27890,&quot;o</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:17502,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;5bc28bcb-f1e3-4845-a027-9d74d49be4a4&quot;,&quot;total_cost_usd&quot;:0.0034648400000000003,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5530,&quot;cache_read_input_tokens&quot;:29254,&quot;o</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15196,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;e0c05870-f8ad-4043-879b-a81d89fc10f3&quot;,&quot;total_cost_usd&quot;:0.00312077,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4941,&quot;cache_read_input_tokens&quot;:28177,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15289,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;ff39e0be-0950-4914-9d9f-5f33772d3c54&quot;,&quot;total_cost_usd&quot;:0.0030516600000000003,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4681,&quot;cache_read_input_tokens&quot;:27716,&quot;o</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M011</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “adding a product shows it in the cart”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:14912,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;ab9e5703-9c9a-42f4-b9c1-2e68fd70aa22&quot;,&quot;total_cost_usd&quot;:0.00396735,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:8826,&quot;cache_read_input_tokens&quot;:25085,&quot;output_token</div><pre class="diff"><span class="del">- cart.push({ id: p.id, name: p.name, price: p.price, quantity: 1 });</span>
+<span class="add">+ cart.push({ id: p.id, name: p.name, price: p.quantity, quantity: 1 });</span></pre><div class="muted">site/app.js:48</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16552,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;81834fd7-f26f-4e61-ad7b-b990b5c2aec1&quot;,&quot;total_cost_usd&quot;:0.00406721,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:9026,&quot;cache_read_input_tokens&quot;:25321,&quot;output_token</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16789,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;e5ce4485-5686-4857-9a13-cac71f1009eb&quot;,&quot;total_cost_usd&quot;:0.0034433,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5208,&quot;cache_read_input_tokens&quot;:28440,&quot;output_tokens</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “remove deletes the clicked item”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16544,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;ba93437c-1bbe-49f6-87b3-3255443041e3&quot;,&quot;total_cost_usd&quot;:0.00331037,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5341,&quot;cache_read_input_tokens&quot;:29237,&quot;output_token</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows all 5 products”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:13520,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;de95f186-bded-431b-bfe2-36757771d22a&quot;,&quot;total_cost_usd&quot;:0.00285783,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4441,&quot;cache_read_input_tokens&quot;:27183,&quot;output_token</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:13941,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;68f376e1-9859-4514-8e7d-0d5eab0fb3d2&quot;,&quot;total_cost_usd&quot;:0.00296005,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4775,&quot;cache_read_input_tokens&quot;:27725,&quot;output_token</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:19863,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;0ba88f7b-ee26-4f0d-9aeb-13d92983bd10&quot;,&quot;total_cost_usd&quot;:0.00383119,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:6024,&quot;cache_read_input_tokens&quot;:30159,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (medium) · test “checkout rejects an email without @”</div>
+                <div class="muted">The test&#39;s logic and the app&#39;s validation both produce the expected &quot;Please enter a valid email&quot; message, so the 10-second timeout most likely came from the environment (slow or unavailable server, or a stalled step), not from a wrong assertion or an app defect.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (medium) · test “checkout succeeds for a customer email”</div>
+                <div class="muted">The test&#39;s steps match the app&#39;s checkout flow, so the 10-second timeout most likely comes from the run environment (slow or stalled server or browser), not from the shop code or the test.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:18905,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;6872b19a-13ee-4fb2-9967-5753f73c3d09&quot;,&quot;total_cost_usd&quot;:0.00360205,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5577,&quot;cache_read_input_tokens&quot;:29485,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:18701,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;8ac5e0cb-362a-46f5-b414-e08aa838d97c&quot;,&quot;total_cost_usd&quot;:0.0037813499999999997,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5720,&quot;cache_read_input_tokens&quot;:29305,&quot;o</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “quantity cannot go below 1”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:21273,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;584c57a5-5843-43ff-b26e-74101512f840&quot;,&quot;total_cost_usd&quot;:0.00387791,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:6152,&quot;cache_read_input_tokens&quot;:30571,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (medium) · test “remove deletes the clicked item”</div>
+                <div class="muted">The remove-item test&#39;s steps and expectation match the app&#39;s behavior, so the 10s timeout most likely comes from the run environment (slow or hung server or browser), not from a code or test defect.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “search finds products regardless of capitalization”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:21788,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;af5d392b-a609-4d3f-86d9-a69843873e6d&quot;,&quot;total_cost_usd&quot;:0.00406857,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:6129,&quot;cache_read_input_tokens&quot;:30297,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows all 5 products”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:18721,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;5e89b653-996f-4f77-b54d-7a7b59ac075e&quot;,&quot;total_cost_usd&quot;:0.00370511,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5553,&quot;cache_read_input_tokens&quot;:28821,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows product names in the list”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15876,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;e4dc35a4-0ff2-4df3-beed-1c08e26a1a8b&quot;,&quot;total_cost_usd&quot;:0.00325928,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5048,&quot;cache_read_input_tokens&quot;:28538,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M017</span><span class="tag">app: boundary change</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “quantity cannot go below 1”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:19465,&quot;num_turns&quot;:7,&quot;stop_reason&quot;:&quot;end_turn&quot;,&quot;session_id&quot;:&quot;80d394d6-1d75-4237-bc03-b5bcef5d5fd6&quot;,&quot;total_cost_usd&quot;:0.0044596,&quot;usage&quot;:{&quot;input_tokens&quot;:10,&quot;cache_creation_input_tokens&quot;:9820,&quot;cache_read_input_tokens&quot;:35310,&quot;output_token</div><pre class="diff"><span class="del">- cart[index].quantity = Math.max(1, cart[index].quantity + delta);</span>
+<span class="add">+ cart[index].quantity = Math.max(0, cart[index].quantity + delta);</span></pre><div class="muted">site/app.js:54</div></div><div class="item"><span class="tag">M020</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “login fails with a wrong password”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:12991,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;d41f0ce8-e0ee-47c8-bc66-8f9efe5deff9&quot;,&quot;total_cost_usd&quot;:0.00277449,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4470,&quot;cache_read_input_tokens&quot;:27419,&quot;output_token</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/login&quot;, {</span>
+<span class="add">+ const response = fetch(&quot;/api/login&quot;, {</span></pre><div class="muted">site/app.js:99</div></div><div class="item"><span class="tag">M021</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:12475,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;6953ac82-fb4c-4694-a716-45f134faddc1&quot;,&quot;total_cost_usd&quot;:0.0026864000000000002,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4578,&quot;cache_read_input_tokens&quot;:28200,&quot;o</div><pre class="diff"><span class="del">- const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.quantity, 0);</span>
+<span class="add">+ const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.price, 0);</span></pre><div class="muted">site/app.js:64</div></div><div class="item"><span class="tag">M021</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:13324,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;d0b4c948-63d3-487c-8489-5085a837bbbc&quot;,&quot;total_cost_usd&quot;:0.00285496,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4776,&quot;cache_read_input_tokens&quot;:28346,&quot;output_token</div><pre class="diff"><span class="del">- const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.quantity, 0);</span>
+<span class="add">+ const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.price, 0);</span></pre><div class="muted">site/app.js:64</div></div><div class="item"><span class="tag">M028</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:17091,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;c7a826f3-2e3d-4fe9-bb16-d6af1433e454&quot;,&quot;total_cost_usd&quot;:0.00408239,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:9203,&quot;cache_read_input_tokens&quot;:25349,&quot;output_token</div><pre class="diff"><span class="del">- if (code === &quot;SAVE10&quot;) discountRate = 0.1;</span>
+<span class="del">- renderCart();</span>
+<span class="add">+ renderCart();</span>
+<span class="add">+ if (code === &quot;SAVE10&quot;) discountRate = 0.1;</span></pre><div class="muted">site/app.js:92</div></div><div class="item"><span class="tag">M029</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:14904,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;015d5a13-0f03-4992-9670-38056b68a85c&quot;,&quot;total_cost_usd&quot;:0.00358684,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:8514,&quot;cache_read_input_tokens&quot;:24424,&quot;output_token</div><pre class="diff"><span class="del">- existing.quantity += 1;</span>
+<span class="add">+ existing.price += 1;</span></pre><div class="muted">site/app.js:45</div></div><div class="item"><span class="tag">M032</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “quantity cannot go below 1”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:12102,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;a1b54cae-8a68-44fb-a62f-f551d22f44f7&quot;,&quot;total_cost_usd&quot;:0.0026469500000000003,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4645,&quot;cache_read_input_tokens&quot;:28315,&quot;o</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;cart-item-qty&quot;&gt;${item.quantity}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;cart-item-qty&quot;&gt;${item.price}&lt;/span&gt;</span></pre><div class="muted">site/app.js:78</div></div><div class="item"><span class="tag">M033</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “login fails for an unknown user”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:17358,&quot;num_turns&quot;:7,&quot;stop_reason&quot;:&quot;end_turn&quot;,&quot;session_id&quot;:&quot;f490e733-2ade-441a-868c-e386a3a7bd18&quot;,&quot;total_cost_usd&quot;:0.00414552,&quot;usage&quot;:{&quot;input_tokens&quot;:10,&quot;cache_creation_input_tokens&quot;:9163,&quot;cache_read_input_tokens&quot;:32592,&quot;output_toke</div><pre class="diff"><span class="del">- $(&quot;login-message&quot;).textContent = data.message;</span>
+<span class="add">+ $(&quot;login-message&quot;).textContent = data.ok;</span></pre><div class="muted">site/app.js:105</div></div><div class="item"><span class="tag">M034</span><span class="tag">test: wrong product used</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “shows product names in the list”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16914,&quot;num_turns&quot;:7,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;b91d4b42-a6a8-4546-9e98-9e71cc964751&quot;,&quot;total_cost_usd&quot;:0.00403115,&quot;usage&quot;:{&quot;input_tokens&quot;:12,&quot;cache_creation_input_tokens&quot;:8915,&quot;cache_read_input_tokens&quot;:32795,&quot;output_toke</div><pre class="diff"><span class="del">- await expect(page.getByTestId(&quot;product-name&quot;).first()).toHaveText(&quot;Coffee Mug&quot;);</span>
+<span class="add">+ await expect(page.getByTestId(&quot;product-name&quot;).first()).toHaveText(&quot;Desk Lamp&quot;);</span></pre><div class="muted">tests/ui/products.spec.ts:13</div></div><div class="item"><span class="tag">M035</span><span class="tag">test: plausible wrong number</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:13391,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;562c9134-5e94-416a-bf78-7240d8aea90e&quot;,&quot;total_cost_usd&quot;:0.00307519,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5000,&quot;cache_read_input_tokens&quot;:28739,&quot;output_token</div><pre class="diff"><span class="del">- await expect(page.getByTestId(&quot;cart-total&quot;)).toHaveText(&quot;25.00&quot;);</span>
+<span class="add">+ await expect(page.getByTestId(&quot;cart-total&quot;)).toHaveText(&quot;50.00&quot;);</span></pre><div class="muted">tests/ui/cart.spec.ts:23</div></div><div class="item"><span class="tag">M048</span><span class="tag">test: swapped steps</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “quantity cannot go below 1”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15840,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;1a7de25f-5a22-442e-8c4c-b2849cb8cf0d&quot;,&quot;total_cost_usd&quot;:0.00343297,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5367,&quot;cache_read_input_tokens&quot;:28727,&quot;output_token</div><pre class="diff"><span class="del">- await addToCart(page, &quot;Coffee Mug&quot;);</span>
+<span class="del">- await page.getByTestId(&quot;qty-minus&quot;).click();</span>
+<span class="add">+ await page.getByTestId(&quot;qty-minus&quot;).click();</span>
+<span class="add">+ await addToCart(page, &quot;Coffee Mug&quot;);</span></pre><div class="muted">tests/ui/cart.spec.ts:42</div></div><div class="item"><span class="tag">M067</span><span class="tag">test: wrong letter case</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “login succeeds with correct credentials”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16035,&quot;num_turns&quot;:7,&quot;stop_reason&quot;:&quot;end_turn&quot;,&quot;session_id&quot;:&quot;f777a0b7-3e69-4760-8e43-7ebc7a2a94e8&quot;,&quot;total_cost_usd&quot;:0.00338221,&quot;usage&quot;:{&quot;input_tokens&quot;:10,&quot;cache_creation_input_tokens&quot;:5295,&quot;cache_read_input_tokens&quot;:36621,&quot;output_toke</div><pre class="diff"><span class="del">- await page.getByTestId(&quot;username&quot;).fill(&quot;admin&quot;);</span>
+<span class="add">+ await page.getByTestId(&quot;username&quot;).fill(&quot;Admin&quot;);</span></pre><div class="muted">tests/ui/login.spec.ts:15</div></div><div class="item"><span class="tag">M068</span><span class="tag">test: checks wrong element</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15999,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;f2928ea7-be78-47c5-9cb7-4aed2e15d05d&quot;,&quot;total_cost_usd&quot;:0.0034325700000000002,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5131,&quot;cache_read_input_tokens&quot;:28107,&quot;o</div><pre class="diff"><span class="del">- const notebook = page.getByTestId(&quot;product-item&quot;).filter({ hasText: &quot;Notebook&quot; });</span>
+<span class="add">+ const notebook = page.getByTestId(&quot;cart-item&quot;).filter({ hasText: &quot;Notebook&quot; });</span></pre><div class="muted">tests/ui/products.spec.ts:17</div></div><div class="item"><span class="tag">M069</span><span class="tag">test: swapped steps</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15859,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;78c5dd38-0ad0-4dc6-9ec7-438658979c53&quot;,&quot;total_cost_usd&quot;:0.00332051,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5262,&quot;cache_read_input_tokens&quot;:28731,&quot;output_token</div><pre class="diff"><span class="del">- await page.getByTestId(&quot;discount-input&quot;).fill(&quot;SAVE10&quot;);</span>
+<span class="del">- await page.getByTestId(&quot;apply-discount&quot;).click();</span>
+<span class="add">+ await page.getByTestId(&quot;apply-discount&quot;).click();</span>
+<span class="add">+ await page.getByTestId(&quot;discount-input&quot;).fill(&quot;SAVE10&quot;);</span></pre><div class="muted">tests/ui/cart.spec.ts:28</div></div><div class="item"><span class="tag">M072</span><span class="tag">test: checks wrong element</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “checkout rejects an email without @”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:13900,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;6f7987ae-1888-495e-bec2-f870eff37745&quot;,&quot;total_cost_usd&quot;:0.0030401900000000003,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4742,&quot;cache_read_input_tokens&quot;:27749,&quot;o</div><pre class="diff"><span class="del">- await expect(page.getByTestId(&quot;checkout-message&quot;)).toHaveText(&quot;Please enter a valid email&quot;);</span>
+<span class="add">+ await expect(page.getByTestId(&quot;login-message&quot;)).toHaveText(&quot;Please enter a valid email&quot;);</span></pre><div class="muted">tests/ui/checkout.spec.ts:38</div></div><div class="item"><span class="tag">M075</span><span class="tag">test: checks wrong element</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16670,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;4373b846-7b28-4e3d-a161-abefa84a596c&quot;,&quot;total_cost_usd&quot;:0.00343059,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5204,&quot;cache_read_input_tokens&quot;:28249,&quot;output_token</div><pre class="diff"><span class="del">- await page.getByTestId(&quot;checkout-button&quot;).click();</span>
+<span class="add">+ await page.getByTestId(&quot;login-button&quot;).click();</span></pre><div class="muted">tests/ui/checkout.spec.ts:28</div></div>
+  </details>
+  <details class="config" >
+    <summary><b>opus:minimal</b>: 73.0% accurate, 31 mistakes</summary>
+    <h3>Confusion matrix</h3>
+  <div class="table-wrap"><table class="confusion">
+    <thead><tr><th>Truth ↓ / AI said →</th><th>app bug</th><th>test bug</th><th>environment</th><th>error</th></tr></thead>
+    <tbody><tr><th>app bug</th><td class="hit">58</td><td class="miss">24</td><td class="miss">4</td><td class="">0</td></tr><tr><th>test bug</th><td class="miss">3</td><td class="hit">26</td><td class="">0</td><td class="">0</td></tr></tbody></table></div>
+    <h3>Accuracy by type of change</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">app: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:46.2%"></div></div>
+      <div class="bar-value">6/13</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong letter case</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:50.0%"></div></div>
+      <div class="bar-value">1/2</div></div>
+    <div class="bar-row"><div class="bar-label">app: missing await</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:54.8%"></div></div>
+      <div class="bar-value">17/31</div></div>
+    <div class="bar-row"><div class="bar-label">test: plausible wrong number</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:75.0%"></div></div>
+      <div class="bar-value">3/4</div></div>
+    <div class="bar-row"><div class="bar-label">app: wrong field</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:76.7%"></div></div>
+      <div class="bar-value">23/30</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong product used</div>
+      <div class="bar-track"><div class="bar-fill " style="width:88.9%"></div></div>
+      <div class="bar-value">8/9</div></div>
+    <div class="bar-row"><div class="bar-label">test: checks wrong element</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">12/12</div></div>
+    <div class="bar-row"><div class="bar-label">app: boundary change</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">10/10</div></div>
+    <div class="bar-row"><div class="bar-label">app: weakened validation</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div>
+    <div class="bar-row"><div class="bar-label">test: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div></div>
+    <h3>Accuracy by the confidence the AI reported</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">low</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:45.5%"></div></div>
+      <div class="bar-value">20/44</div></div>
+    <div class="bar-row"><div class="bar-label">medium</div>
+      <div class="bar-track"><div class="bar-fill " style="width:86.5%"></div></div>
+      <div class="bar-value">45/52</div></div>
+    <div class="bar-row"><div class="bar-label">high</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">19/19</div></div></div>
+    <h3>Mistakes (31)</h3>
+    <div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (medium) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test ran out of time before reaching any of its checks, most likely because the shop page never loaded or never became usable, not because of wrong cart behavior or a wrong test.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The discount test probably timed out because it looks for a discount field or Apply button by test IDs that likely aren&#39;t on the page, not because the shop calculates the discount wrong.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">The test probably times out because it tries to add a product called &quot;Headphones&quot; that doesn&#39;t seem to exist in the shop, so the add-to-cart click never finds a button.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “quantity cannot go below 1”</div>
+                <div class="muted">The test probably clicks a &quot;−&quot; button the shop disables at quantity 1, so Playwright waits for it to become clickable until the test times out.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “remove deletes the clicked item”</div>
+                <div class="muted">The test got stuck trying to click a remove button it couldn&#39;t find, most likely because it uses page element names (&#39;cart-item&#39; / &#39;remove-item&#39;) that no other test uses and that probably don&#39;t exist in the cart.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows product names in the list”</div>
+                <div class="muted">The test looks for a &#39;product-name&#39; element the page doesn&#39;t seem to have. The products themselves appear to display, so the test&#39;s selector is most likely wrong.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The test looks for a price element by an id (&quot;product-price&quot;) that doesn&#39;t seem to exist on the page, so it fails before it can check the Notebook&#39;s price.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test ran out of time before any of its checks could fail, which most likely means the shop page didn&#39;t load or respond during the run, not that the cart logic is broken.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The discount test most likely stalls because it looks for a discount box or button by a test ID that isn&#39;t on the page, so it timed out before it could check any total.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">The test likely tries to add a product called &quot;Headphones&quot; that isn&#39;t in the shop, so the add-to-cart click waits until the test times out.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “quantity cannot go below 1”</div>
+                <div class="muted">The test clicks the minus button twice when the mug quantity is already 1, and a click hangs (most likely because the app correctly disables the button at 1), so the test runs out of time instead of checking anything.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “remove deletes the clicked item”</div>
+                <div class="muted">The test probably can&#39;t find the cart row it&#39;s looking for, so it gets stuck trying to click the remove button and runs out of time. There&#39;s no sign the shop removed the wrong item.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows product names in the list”</div>
+                <div class="muted">The test looks for a product-name element that never appeared on the page, so it most likely uses a selector the shop doesn&#39;t have, not a real defect in the shop.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The test failed because it couldn&#39;t find a price element marked &quot;product-price&quot; inside the Notebook card, most likely because that test ID doesn&#39;t exist on the page, not because the price is wrong.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test ran out of time, most likely while waiting to click &quot;Add to cart&quot; on Coffee Mug. The error doesn&#39;t show why, so this is labelled environment with low confidence until a re-run with a trace confirms the cause.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The discount test got stuck waiting for a page element, most likely because the discount field or Apply button test IDs it uses don&#39;t exist on the page.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">The test tries to add a product called &quot;Headphones&quot;, which most likely isn&#39;t in the shop, so it waits for a button that never appears and times out.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “quantity cannot go below 1”</div>
+                <div class="muted">The test got stuck trying to click a &quot;minus&quot; button that the shop probably disables when the quantity is 1, so the test timed out and never checked the quantity.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “remove deletes the clicked item”</div>
+                <div class="muted">The test most likely gets stuck clicking a cart-row &quot;remove&quot; element whose test IDs (&quot;cart-item&quot; / &quot;remove-item&quot;) probably don&#39;t exist in the page, so it runs out of time without ever checking the result.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows product names in the list”</div>
+                <div class="muted">The test looks for a product-name element that doesn&#39;t seem to exist on the product list page, so it fails before it can check any text.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The test couldn&#39;t find a Notebook price element on the page at all, which most likely means its locator (product name or price test id) doesn&#39;t match the page, not that the price is wrong.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test timed out without naming any failing step or wrong value, which most likely means the shop page never loaded (server down, slow or wrong URL), not that the test or the app is wrong.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The test most likely hangs because it looks for discount-code controls using test ids the page doesn&#39;t have, so it waits until the 10-second limit runs out.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">The test probably tries to add a product called &quot;Headphones&quot; that the shop doesn&#39;t sell, so the add-to-cart click waits until the test runs out of time.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “quantity cannot go below 1”</div>
+                <div class="muted">The test times out because it waits to click a quantity-minus button that most likely can&#39;t be clicked at quantity 1 (probably disabled). The app is probably working as intended.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “remove deletes the clicked item”</div>
+                <div class="muted">The test probably hangs because it looks for a cart row with the id &quot;cart-item&quot;, which no other test uses and may not exist in the page, so the remove click never happens.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “shows product names in the list”</div>
+                <div class="muted">The test looks for a product-name element that doesn&#39;t exist on the page, so it fails before it ever checks the product name.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The test looks for a price element by an ID that probably isn&#39;t on the page, so it fails before it can compare Notebook&#39;s price.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M050</span><span class="tag">test: plausible wrong number</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> app-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The product list shows the Notebook at $4.75 instead of the expected $9.50, exactly half, which points to a price calculation or display bug in the shop.</div><pre class="diff"><span class="del">- await expect(notebook.getByTestId(&quot;product-price&quot;)).toHaveText(&quot;$4.75&quot;);</span>
+<span class="add">+ await expect(notebook.getByTestId(&quot;product-price&quot;)).toHaveText(&quot;$9.50&quot;);</span></pre><div class="muted">tests/ui/products.spec.ts:18</div></div><div class="item"><span class="tag">M062</span><span class="tag">test: wrong product used</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> app-bug (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">After applying the SAVE10 code the cart total drops to about 10% of the price (4.28) instead of 90% of it, so the discount seems to be calculated the wrong way round.</div><pre class="diff"><span class="del">- await addToCart(page, &quot;Desk Lamp&quot;); // 39.90</span>
+<span class="add">+ await addToCart(page, &quot;Notebook&quot;); // 39.90</span></pre><div class="muted">tests/ui/cart.spec.ts:27</div></div><div class="item"><span class="tag">M071</span><span class="tag">test: wrong letter case</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> app-bug (low) · test “login succeeds with correct credentials”</div>
+                <div class="muted">Logging in as admin with the password the test treats as correct is rejected with &quot;Invalid username or password&quot;, so valid users likely cannot log in.</div><pre class="diff"><span class="del">- await page.getByTestId(&quot;password&quot;).fill(&quot;Secret123&quot;);</span>
+<span class="add">+ await page.getByTestId(&quot;password&quot;).fill(&quot;secret123&quot;);</span></pre><div class="muted">tests/ui/login.spec.ts:16</div></div>
+  </details>
+  <details class="config" >
+    <summary><b>haiku:minimal</b>: 47.0% accurate, 61 mistakes</summary>
+    <h3>Confusion matrix</h3>
+  <div class="table-wrap"><table class="confusion">
+    <thead><tr><th>Truth ↓ / AI said →</th><th>app bug</th><th>test bug</th><th>environment</th><th>error</th></tr></thead>
+    <tbody><tr><th>app bug</th><td class="hit">34</td><td class="miss">16</td><td class="miss">18</td><td class="miss">18</td></tr><tr><th>test bug</th><td class="miss">2</td><td class="hit">20</td><td class="">0</td><td class="miss">7</td></tr></tbody></table></div>
+    <h3>Accuracy by type of change</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">app: missing await</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:22.6%"></div></div>
+      <div class="bar-value">7/31</div></div>
+    <div class="bar-row"><div class="bar-label">app: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:23.1%"></div></div>
+      <div class="bar-value">3/13</div></div>
+    <div class="bar-row"><div class="bar-label">test: plausible wrong number</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:50.0%"></div></div>
+      <div class="bar-value">2/4</div></div>
+    <div class="bar-row"><div class="bar-label">test: swapped steps</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:50.0%"></div></div>
+      <div class="bar-value">1/2</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong letter case</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:50.0%"></div></div>
+      <div class="bar-value">1/2</div></div>
+    <div class="bar-row"><div class="bar-label">app: wrong field</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:53.3%"></div></div>
+      <div class="bar-value">16/30</div></div>
+    <div class="bar-row"><div class="bar-label">test: wrong product used</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:55.6%"></div></div>
+      <div class="bar-value">5/9</div></div>
+    <div class="bar-row"><div class="bar-label">app: boundary change</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:60.0%"></div></div>
+      <div class="bar-value">6/10</div></div>
+    <div class="bar-row"><div class="bar-label">test: checks wrong element</div>
+      <div class="bar-track"><div class="bar-fill " style="width:91.7%"></div></div>
+      <div class="bar-value">11/12</div></div>
+    <div class="bar-row"><div class="bar-label">app: weakened validation</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">2/2</div></div></div>
+    <h3>Accuracy by the confidence the AI reported</h3><div class="card">
+    <div class="bar-row"><div class="bar-label">none</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:0.0%"></div></div>
+      <div class="bar-value">0/25</div></div>
+    <div class="bar-row"><div class="bar-label">low</div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:23.8%"></div></div>
+      <div class="bar-value">10/42</div></div>
+    <div class="bar-row"><div class="bar-label">medium</div>
+      <div class="bar-track"><div class="bar-fill " style="width:89.7%"></div></div>
+      <div class="bar-value">35/39</div></div>
+    <div class="bar-row"><div class="bar-label">high</div>
+      <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+      <div class="bar-value">9/9</div></div></div>
+    <h3>Mistakes (61)</h3>
+    <div class="item"><span class="tag">M001</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16684,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;49a24db6-fa85-4e8a-aa52-e092d0448231&quot;,&quot;total_cost_usd&quot;:0.0030637800000000003,&quot;usage&quot;:{&quot;input_tokens&quot;:6,&quot;cache_creation_input_tokens&quot;:5337,&quot;cache_read_input_tokens&quot;:11328,&quot;o</div><pre class="diff"><span class="del">- const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.quantity, 0);</span>
+<span class="add">+ const subtotal = cart.reduce((sum, item) =&gt; sum + item.quantity * item.quantity, 0);</span></pre><div class="muted">site/app.js:64</div></div><div class="item"><span class="tag">M002</span><span class="tag">app: boundary change</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:17167,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;38ecd804-6fe2-4042-bb6d-ab142b55707b&quot;,&quot;total_cost_usd&quot;:0.00321655,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5258,&quot;cache_read_input_tokens&quot;:15965,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(1)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout, and the log does not show which step stalled, so I can&#39;t attribute it to the app or the test with confidence; it looks more like a timing or setup problem.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:17933,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;3838d478-3c92-4ab8-8f51-1d53671f354f&quot;,&quot;total_cost_usd&quot;:0.00332603,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5417,&quot;cache_read_input_tokens&quot;:16483,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “checkout rejects an email without @”</div>
+                <div class="muted">The test was killed by the 10-second test timeout before reaching its final assertion, so the log doesn&#39;t show whether the app accepts &quot;hello.world&quot;; the failure looks like a hang or slow step in the setup, not a proven email-validation bug.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “checkout succeeds for a customer email”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout without a specific assertion failure, so the error alone does not show whether the app, the test, or the environment is at fault. The most likely cause is the setup (slow page load or server), but this needs a rerun or a trace to confirm.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The test hangs until the 10s test timeout while filling or clicking the discount controls, which points to the test targeting discount selectors that are not present on the page. This needs confirmation against the live DOM because the app source is not available.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:22464,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;7258154c-d391-49fd-9a3f-f1b6f19a0b75&quot;,&quot;total_cost_usd&quot;:0.00411066,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:6060,&quot;cache_read_input_tokens&quot;:16886,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “quantity cannot go below 1”</div>
+                <div class="muted">The test clicks the quantity-minus button when the quantity is already 1, so the button is probably disabled and the click waits until the 10s test timeout. The app is likely behaving correctly.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “remove deletes the clicked item”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout instead of failing on an assertion, and the error gives no evidence of whether the app or the test is at fault, so this needs a trace or screenshot before it can be assigned.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows product names in the list”</div>
+                <div class="muted">The test looks for a &quot;product-name&quot; element before the product list has rendered, and it assumes Coffee Mug is the first item, so it fails even though the shop may be working.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M003</span><span class="tag">app: swapped steps</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The test looks for a product whose text contains &quot;Notebook&quot; and expects its price to be &quot;$4.75&quot;, but no such element exists on the page, so the test cannot pass as written. The likely cause is wrong test data (the product name or price is not what the test assumes), not a shop bug.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="del">- renderProducts(products);</span>
+<span class="add">+ renderProducts(products);</span>
+<span class="add">+ products = await response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M007</span><span class="tag">app: boundary change</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “search shows user input as plain text”</div>
+                <div class="muted">The test expects a search-message element to echo the typed query, but the element is empty after a plain fill, and nothing in the provided material shows the app is supposed to echo the query there.</div><pre class="diff"><span class="del">- found.length === 0 ? `No results for &quot;${term}&quot;` : &quot;&quot;;</span>
+<span class="add">+ found.length === 1 ? `No results for &quot;${term}&quot;` : &quot;&quot;;</span></pre><div class="muted">site/app.js:38</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test hit the whole-test 10s timeout rather than a specific assertion failure, which points to a hang or slow page load in the setup, not a clear app or test logic error.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:19783,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;69264e81-b9e4-4118-ab26-abf18f5140dd&quot;,&quot;total_cost_usd&quot;:0.0034078600000000004,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4744,&quot;cache_read_input_tokens&quot;:18726,&quot;o</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “checkout rejects an email without @”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:17037,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;5d68250a-0cc8-4620-99fd-fe75bc4d15c6&quot;,&quot;total_cost_usd&quot;:0.00297345,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4033,&quot;cache_read_input_tokens&quot;:16505,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “checkout succeeds for a customer email”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout without any assertion failure, and the sibling tests that run the same add-to-cart and checkout flow are not reported as failing, so this looks like a timing or setup problem rather than a clear app or test defect.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The discount test hangs on a UI action rather than failing an assertion, which most likely means the discount input or apply button it targets is not present on the page; the test cannot be confirmed as wrong without the page DOM or trace.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">The test adds a &quot;Headphones&quot; product that the shop likely does not offer or cannot add, so the test waits on a button that never appears until the 10s test timeout hits.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (medium) · test “quantity cannot go below 1”</div>
+                <div class="muted">The test clicks the quantity-minus button while the quantity is already 1, and Playwright waits for that button to become clickable until the test times out; the shop is most likely correctly blocking the decrease.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “remove deletes the clicked item”</div>
+                <div class="muted">The test timed out at 10s without naming any failing step, and the test code itself looks valid, so this is most likely a slow or unresponsive run rather than a clear app or test defect. The failing step needs confirming from the Playwright trace.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “search finds products regardless of capitalization”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16146,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;90941e1c-e88b-46ce-b6f3-31a56670a4c2&quot;,&quot;total_cost_usd&quot;:0.00280681,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:3929,&quot;cache_read_input_tokens&quot;:16371,&quot;output_token</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “search shows user input as plain text”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:24765,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;245553a3-0345-4106-954a-4a499988c514&quot;,&quot;total_cost_usd&quot;:0.0041389600000000006,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5691,&quot;cache_read_input_tokens&quot;:18996,&quot;o</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “shows all 5 products”</div>
+                <div class="muted">The shop&#39;s home page loaded, but no product items appeared within the 2-second assertion window, so I can&#39;t tell from the test alone whether the cause is slow or failed product loading, a changed test ID, or a real app defect.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “shows product names in the list”</div>
+                <div class="muted">The test could not find any element with data-testid=&quot;product-name&quot; within 2 seconds, so the failure cannot be pinned on the shop&#39;s code or on the test from the information available.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M010</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The Notebook price check found no matching product element on the home page, most likely because the test&#39;s assumptions about the product list or its markup do not match the page. This is not confirmed because the product data and app source were not provided.</div><pre class="diff"><span class="del">- products = await response.json();</span>
+<span class="add">+ products = response.json();</span></pre><div class="muted">site/app.js:12</div></div><div class="item"><span class="tag">M011</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:19132,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;621d477e-23be-4bb0-ad29-c4d9e56cc0f3&quot;,&quot;total_cost_usd&quot;:0.0036000400000000005,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5932,&quot;cache_read_input_tokens&quot;:16834,&quot;o</div><pre class="diff"><span class="del">- cart.push({ id: p.id, name: p.name, price: p.price, quantity: 1 });</span>
+<span class="add">+ cart.push({ id: p.id, name: p.name, price: p.quantity, quantity: 1 });</span></pre><div class="muted">site/app.js:48</div></div><div class="item"><span class="tag">M012</span><span class="tag">app: boundary change</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “adding a product shows it in the cart”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15935,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;caaee358-3f13-4663-b46a-a7998403a785&quot;,&quot;total_cost_usd&quot;:0.0029998200000000003,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5152,&quot;cache_read_input_tokens&quot;:16112,&quot;o</div><pre class="diff"><span class="del">- $(&quot;cart-total&quot;).textContent = cartTotal().toFixed(2);</span>
+<span class="add">+ $(&quot;cart-total&quot;).textContent = cartTotal().toFixed(1);</span></pre><div class="muted">site/app.js:87</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout instead of failing on a specific assertion, so the error alone doesn&#39;t show whether the app or the test is wrong; the most likely cause is a slow or stalled step (page load, click, or wait) rather than a wrong cart total.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout while adding the Coffee Mug a second time, before any assertion ran, so the error doesn&#39;t show whether the app or the test is at fault.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “checkout rejects an email without @”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout while waiting on a step, so the error does not show whether the app accepted or rejected the invalid email; the cause is not yet determined from the available information.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “checkout succeeds for a customer email”</div>
+                <div class="muted">The test hit the 10-second whole-test timeout with no step or assertion message, and the test code looks correct, so this is most likely a slow or unresponsive environment, though it cannot be confirmed without more information.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The discount test hit the 10-second test timeout, and the error does not say which step stalled, so I can&#39;t tell whether the app or the test is at fault.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">The test most likely hangs at the &quot;Headphones&quot; add-to-cart click because that product may not exist in the catalog, and the test uses it while the other tests use &quot;Notebook&quot;.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “quantity cannot go below 1”</div>
+                <div class="muted">The test clicks the quantity &quot;minus&quot; button a second time at quantity 1, and that click most likely hangs because the button is disabled at the minimum, so the test never reaches its assertion.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “remove deletes the clicked item”</div>
+                <div class="muted">The test hung until the 10s test limit, most likely while waiting for the &quot;cart-item&quot; or &quot;remove-item&quot; locator used in the remove step, which this test uses for the first time in the file. The cause cannot be confirmed without the app code or the DOM.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows all 5 products”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15676,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;c354956c-d84c-43fd-b5c6-00cba6594dc7&quot;,&quot;total_cost_usd&quot;:0.00260668,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:3714,&quot;cache_read_input_tokens&quot;:16058,&quot;output_token</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows product names in the list”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:19515,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;9cbcec68-3e75-476c-bc36-68e7ebf414b4&quot;,&quot;total_cost_usd&quot;:0.0033220200000000006,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4543,&quot;cache_read_input_tokens&quot;:16812,&quot;o</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M015</span><span class="tag">app: missing await</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The Notebook price test looks for a product or price element that the page does not contain, and without the product data or app source I cannot confirm whether the test or the app is at fault.</div><pre class="diff"><span class="del">- const response = await fetch(&quot;/api/products&quot;);</span>
+<span class="add">+ const response = fetch(&quot;/api/products&quot;);</span></pre><div class="muted">site/app.js:11</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “adding a product shows it in the cart”</div>
+                <div class="muted">The test hit the 10-second test-level timeout without a specific assertion or locator error, so the log alone cannot show whether the app, the test, or the environment is at fault; the test code itself looks sound.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:28013,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;3e686b50-d647-43c2-9c15-892ebdb80e24&quot;,&quot;total_cost_usd&quot;:0.00477613,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:6334,&quot;cache_read_input_tokens&quot;:20753,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “checkout rejects an email without @”</div>
+                <div class="muted">The test failed with a 10s whole-test timeout, and the error alone does not show whether the cause is the app or the setup, so this is a low-confidence environment/unknown call that needs a re-run and a trace.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “checkout succeeds for a customer email”</div>
+                <div class="muted">The test hit the 10-second test-level timeout without reporting a failed assertion, so the error does not show whether the app or the test is at fault; the most likely explanation is a hang or slow setup, but the Playwright trace is needed to confirm.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> environment (low) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">The test hit a 10-second test-level timeout with no specific assertion or element error, so the log alone cannot show the cause; a trace is needed.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “order confirmation shows the customer&#39;s email”</div>
+                <div class="muted">The test likely times out because it adds a product called &quot;Headphones&quot; that may not exist in the shop&#39;s catalog, so the click on its add-to-cart button never happens; the other tests use &quot;Notebook&quot; and work.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “quantity cannot go below 1”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:20599,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;6270058a-7a9e-4770-95b6-dbf862be6f71&quot;,&quot;total_cost_usd&quot;:0.0039791,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5367,&quot;cache_read_input_tokens&quot;:18940,&quot;output_tokens</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “remove deletes the clicked item”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:23029,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;73028b75-f915-4ba8-b550-0a294c471104&quot;,&quot;total_cost_usd&quot;:0.00363888,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5029,&quot;cache_read_input_tokens&quot;:19378,&quot;output_token</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “shows product names in the list”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:19460,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;fa365286-ca28-4e87-90c4-5c57d9d7f0d3&quot;,&quot;total_cost_usd&quot;:0.0032862300000000002,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4519,&quot;cache_read_input_tokens&quot;:16713,&quot;o</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M016</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “shows the correct price for Notebook”</div>
+                <div class="muted">The Notebook price test found no price element to read, so this is not a wrong-price bug; the test&#39;s assumption that a Notebook product with a product-price element exists is unverified.</div><pre class="diff"><span class="del">- &lt;span data-testid=&quot;product-price&quot;&gt;$${p.price.toFixed(2)}&lt;/span&gt;</span>
+<span class="add">+ &lt;span data-testid=&quot;product-price&quot;&gt;$${p.quantity.toFixed(2)}&lt;/span&gt;</span></pre><div class="muted">site/app.js:24</div></div><div class="item"><span class="tag">M021</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:20958,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;16784b4b-9f45-46aa-b24a-d82439b66f62&quot;,&quot;total_cost_usd&quot;:0.00403289,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:6390,&quot;cache_read_input_tokens&quot;:18059,&quot;output_token</div><pre class="diff"><span class="del">- const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.quantity, 0);</span>
+<span class="add">+ const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.price, 0);</span></pre><div class="muted">site/app.js:64</div></div><div class="item"><span class="tag">M022</span><span class="tag">app: boundary change</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> test-bug (low) · test “checkout succeeds for a customer email”</div>
+                <div class="muted">The test adds a Notebook to the cart and immediately checks out without confirming the item was added, and the page then reports an empty cart. The cause is probably in the test&#39;s add-to-cart step, but the app source is not available, so this is unconfirmed.</div><pre class="diff"><span class="del">- if (cart.length === 0) {</span>
+<span class="add">+ if (cart.length === 1) {</span></pre><div class="muted">site/app.js:116</div></div><div class="item"><span class="tag">M033</span><span class="tag">app: wrong field</span>
+                <div><b>Truth:</b> app-bug · <b>AI said:</b> error (n/a) · test “login fails with a wrong password”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15021,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;d5258496-39df-4a8c-bbf7-191c1c5badaf&quot;,&quot;total_cost_usd&quot;:0.00270659,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4446,&quot;cache_read_input_tokens&quot;:14659,&quot;output_token</div><pre class="diff"><span class="del">- $(&quot;login-message&quot;).textContent = data.message;</span>
+<span class="add">+ $(&quot;login-message&quot;).textContent = data.ok;</span></pre><div class="muted">site/app.js:105</div></div><div class="item"><span class="tag">M035</span><span class="tag">test: plausible wrong number</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “cart total multiplies price by quantity”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16363,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;68ba89ed-0767-4421-acb0-1b139fba1ccc&quot;,&quot;total_cost_usd&quot;:0.0030719200000000006,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4105,&quot;cache_read_input_tokens&quot;:17262,&quot;o</div><pre class="diff"><span class="del">- await expect(page.getByTestId(&quot;cart-total&quot;)).toHaveText(&quot;25.00&quot;);</span>
+<span class="add">+ await expect(page.getByTestId(&quot;cart-total&quot;)).toHaveText(&quot;50.00&quot;);</span></pre><div class="muted">tests/ui/cart.spec.ts:23</div></div><div class="item"><span class="tag">M050</span><span class="tag">test: plausible wrong number</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:23519,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;cb5fca52-3886-4de0-a37a-6f898542389e&quot;,&quot;total_cost_usd&quot;:0.00427808,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:6560,&quot;cache_read_input_tokens&quot;:18028,&quot;output_token</div><pre class="diff"><span class="del">- await expect(notebook.getByTestId(&quot;product-price&quot;)).toHaveText(&quot;$4.75&quot;);</span>
+<span class="add">+ await expect(notebook.getByTestId(&quot;product-price&quot;)).toHaveText(&quot;$9.50&quot;);</span></pre><div class="muted">tests/ui/products.spec.ts:18</div></div><div class="item"><span class="tag">M058</span><span class="tag">test: wrong product used</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “remove deletes the clicked item”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:19055,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;bc473985-264d-4cfb-96b7-08d34758ad36&quot;,&quot;total_cost_usd&quot;:0.00383426,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5985,&quot;cache_read_input_tokens&quot;:16846,&quot;output_token</div><pre class="diff"><span class="del">- const mugRow = page.getByTestId(&quot;cart-item&quot;).filter({ hasText: &quot;Coffee Mug&quot; });</span>
+<span class="add">+ const mugRow = page.getByTestId(&quot;cart-item&quot;).filter({ hasText: &quot;Desk Lamp&quot; });</span></pre><div class="muted">tests/ui/cart.spec.ts:36</div></div><div class="item"><span class="tag">M062</span><span class="tag">test: wrong product used</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> app-bug (medium) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">After applying the SAVE10 code to a 39.90 Notebook, the cart total shows 4.28 instead of the expected 35.91, so the discount calculation appears to be wrong.</div><pre class="diff"><span class="del">- await addToCart(page, &quot;Desk Lamp&quot;); // 39.90</span>
+<span class="add">+ await addToCart(page, &quot;Notebook&quot;); // 39.90</span></pre><div class="muted">tests/ui/cart.spec.ts:27</div></div><div class="item"><span class="tag">M066</span><span class="tag">test: wrong product used</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “remove deletes the clicked item”</div>
+                <div class="muted">Error: Claude Code returned no usable answer: I can&#39;t submit the structured result. Each attempt is rejected because the `bugCategory` and `severity` fields are reported missing, even though I&#39;m sending them as null. It looks like null values are being dropped before the schema check, but I can&#39;t co</div><pre class="diff"><span class="del">- await expect(page.getByTestId(&quot;cart-item-name&quot;)).toHaveText([&quot;Desk Lamp&quot;]);</span>
+<span class="add">+ await expect(page.getByTestId(&quot;cart-item-name&quot;)).toHaveText([&quot;Notebook&quot;]);</span></pre><div class="muted">tests/ui/cart.spec.ts:38</div></div><div class="item"><span class="tag">M068</span><span class="tag">test: checks wrong element</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:16740,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;002b060e-56f6-490b-80c0-5fbb814dec43&quot;,&quot;total_cost_usd&quot;:0.0032483,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:5122,&quot;cache_read_input_tokens&quot;:15110,&quot;output_tokens</div><pre class="diff"><span class="del">- const notebook = page.getByTestId(&quot;product-item&quot;).filter({ hasText: &quot;Notebook&quot; });</span>
+<span class="add">+ const notebook = page.getByTestId(&quot;cart-item&quot;).filter({ hasText: &quot;Notebook&quot; });</span></pre><div class="muted">tests/ui/products.spec.ts:17</div></div><div class="item"><span class="tag">M069</span><span class="tag">test: swapped steps</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “discount code SAVE10 gives 10% off”</div>
+                <div class="muted">Error: Claude Code returned no usable answer: I could not submit the structured result. Four attempts were rejected, and each time the validator reported a required field missing (`bugCategory`, then `severity`), even though I sent both with null values. It looks like the null-valued fields are bein</div><pre class="diff"><span class="del">- await page.getByTestId(&quot;discount-input&quot;).fill(&quot;SAVE10&quot;);</span>
+<span class="del">- await page.getByTestId(&quot;apply-discount&quot;).click();</span>
+<span class="add">+ await page.getByTestId(&quot;apply-discount&quot;).click();</span>
+<span class="add">+ await page.getByTestId(&quot;discount-input&quot;).fill(&quot;SAVE10&quot;);</span></pre><div class="muted">tests/ui/cart.spec.ts:28</div></div><div class="item"><span class="tag">M070</span><span class="tag">test: wrong product used</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> error (n/a) · test “shows the correct price for Notebook”</div>
+                <div class="muted">Error: claude exited with code 1: {&quot;is_error&quot;:true,&quot;duration_api_ms&quot;:15304,&quot;num_turns&quot;:6,&quot;stop_reason&quot;:&quot;tool_use&quot;,&quot;session_id&quot;:&quot;3d3bf2ff-48a0-47c6-a6aa-9fd17cf0df5a&quot;,&quot;total_cost_usd&quot;:0.00298632,&quot;usage&quot;:{&quot;input_tokens&quot;:8,&quot;cache_creation_input_tokens&quot;:4847,&quot;cache_read_input_tokens&quot;:14912,&quot;output_token</div><pre class="diff"><span class="del">- const notebook = page.getByTestId(&quot;product-item&quot;).filter({ hasText: &quot;Notebook&quot; });</span>
+<span class="add">+ const notebook = page.getByTestId(&quot;product-item&quot;).filter({ hasText: &quot;Water Bottle&quot; });</span></pre><div class="muted">tests/ui/products.spec.ts:17</div></div><div class="item"><span class="tag">M071</span><span class="tag">test: wrong letter case</span>
+                <div><b>Truth:</b> test-bug · <b>AI said:</b> app-bug (low) · test “login succeeds with correct credentials”</div>
+                <div class="muted">Logging in with the admin account and password &quot;secret123&quot; shows &quot;Invalid username or password&quot; instead of logging the user in, so the app appears to reject valid credentials.</div><pre class="diff"><span class="del">- await page.getByTestId(&quot;password&quot;).fill(&quot;Secret123&quot;);</span>
+<span class="add">+ await page.getByTestId(&quot;password&quot;).fill(&quot;secret123&quot;);</span></pre><div class="muted">tests/ui/login.spec.ts:16</div></div>
+  </details>
+
+  <h2>Gaps in the test suite <span class="muted">(9 app changes not caught)</span></h2>
+  <p class="lead">These app changes broke nothing that any test checks. Each one is an idea for a new test. These gaps are left in on purpose, to demonstrate that the benchmark detects weaknesses in the test suite, not only in the app.</p>
+  <div class="item"><span class="tag">M008</span><span class="tag">swapped steps</span><span class="muted">site/app.js:122</span><pre class="diff"><span class="del">- cart = [];</span>
+<span class="del">- renderCart();</span>
+<span class="add">+ renderCart();</span>
+<span class="add">+ cart = [];</span></pre></div><div class="item"><span class="tag">M013</span><span class="tag">swapped steps</span><span class="muted">site/app.js:82</span><pre class="diff"><span class="del">- li.querySelector(&quot;[data-testid=qty-minus]&quot;).onclick = () =&gt; changeQuantity(index, -1);</span>
+<span class="del">- li.querySelector(&quot;[data-testid=qty-plus]&quot;).onclick = () =&gt; changeQuantity(index, +1);</span>
+<span class="add">+ li.querySelector(&quot;[data-testid=qty-plus]&quot;).onclick = () =&gt; changeQuantity(index, +1);</span>
+<span class="add">+ li.querySelector(&quot;[data-testid=qty-minus]&quot;).onclick = () =&gt; changeQuantity(index, -1);</span></pre></div><div class="item"><span class="tag">M014</span><span class="tag">weakened validation</span><span class="muted">site/app.js:91</span><pre class="diff"><span class="del">- const code = $(&quot;discount&quot;).value.trim().toUpperCase();</span>
+<span class="add">+ const code = $(&quot;discount&quot;).value.trim();</span></pre></div><div class="item"><span class="tag">M018</span><span class="tag">swapped steps</span><span class="muted">site/app.js:84</span><pre class="diff"><span class="del">- li.querySelector(&quot;[data-testid=remove-item]&quot;).onclick = () =&gt; removeFromCart(index);</span>
+<span class="del">- ul.appendChild(li);</span>
+<span class="add">+ ul.appendChild(li);</span>
+<span class="add">+ li.querySelector(&quot;[data-testid=remove-item]&quot;).onclick = () =&gt; removeFromCart(index);</span></pre></div><div class="item"><span class="tag">M019</span><span class="tag">weakened validation</span><span class="muted">site/app.js:35</span><pre class="diff"><span class="del">- const found = products.filter((p) =&gt; p.name.toLowerCase().includes(term.toLowerCase()));</span>
+<span class="add">+ const found = products.filter((p) =&gt; p.name.toLowerCase().includes(term));</span></pre></div><div class="item"><span class="tag">M024</span><span class="tag">weakened validation</span><span class="muted">site/app.js:110</span><pre class="diff"><span class="del">- return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);</span>
+<span class="add">+ return /^[^\s@]+@[^\s@]+$/.test(email);</span></pre></div><div class="item"><span class="tag">M026</span><span class="tag">swapped steps</span><span class="muted">site/app.js:54</span><pre class="diff"><span class="del">- cart[index].quantity = Math.max(1, cart[index].quantity + delta);</span>
+<span class="del">- renderCart();</span>
+<span class="add">+ renderCart();</span>
+<span class="add">+ cart[index].quantity = Math.max(1, cart[index].quantity + delta);</span></pre></div><div class="item"><span class="tag">M027</span><span class="tag">wrong field</span><span class="muted">site/app.js:54</span><pre class="diff"><span class="del">- cart[index].quantity = Math.max(1, cart[index].quantity + delta);</span>
+<span class="add">+ cart[index].price = Math.max(1, cart[index].quantity + delta);</span></pre></div><div class="item"><span class="tag">M030</span><span class="tag">swapped steps</span><span class="muted">site/app.js:83</span><pre class="diff"><span class="del">- li.querySelector(&quot;[data-testid=qty-plus]&quot;).onclick = () =&gt; changeQuantity(index, +1);</span>
+<span class="del">- li.querySelector(&quot;[data-testid=remove-item]&quot;).onclick = () =&gt; removeFromCart(index);</span>
+<span class="add">+ li.querySelector(&quot;[data-testid=remove-item]&quot;).onclick = () =&gt; removeFromCart(index);</span>
+<span class="add">+ li.querySelector(&quot;[data-testid=qty-plus]&quot;).onclick = () =&gt; changeQuantity(index, +1);</span></pre></div>
+
+  <h2>All mutants</h2>
+  <details class="all"><summary>Show all 83</summary>
+  <div class="table-wrap" style="margin-top:10px"><table>
+    <thead><tr><th>ID</th><th>Change</th><th>Where</th><th>Tests</th></tr></thead>
+    <tbody><tr><td>M001</td><td>app: wrong field</td><td>site/app.js:64</td><td>killed (3 failed)</td></tr><tr><td>M002</td><td>app: boundary change</td><td>site/app.js:24</td><td>killed (1 failed)</td></tr><tr><td>M003</td><td>app: swapped steps</td><td>site/app.js:12</td><td>killed (11 failed)</td></tr><tr><td>M004</td><td>app: weakened validation</td><td>site/app.js:35</td><td>killed (1 failed)</td></tr><tr><td>M005</td><td>app: missing await</td><td>site/app.js:104</td><td>killed (3 failed)</td></tr><tr><td>M006</td><td>app: wrong field</td><td>src/server.ts:50</td><td>killed (1 failed)</td></tr><tr><td>M007</td><td>app: boundary change</td><td>site/app.js:38</td><td>killed (1 failed)</td></tr><tr><td>M008</td><td>app: swapped steps</td><td>site/app.js:122</td><td>survived</td></tr><tr><td>M009</td><td>app: weakened validation</td><td>src/server.ts:50</td><td>killed (1 failed)</td></tr><tr><td>M010</td><td>app: missing await</td><td>site/app.js:12</td><td>killed (13 failed)</td></tr><tr><td>M011</td><td>app: wrong field</td><td>site/app.js:48</td><td>killed (3 failed)</td></tr><tr><td>M012</td><td>app: boundary change</td><td>site/app.js:87</td><td>killed (3 failed)</td></tr><tr><td>M013</td><td>app: swapped steps</td><td>site/app.js:82</td><td>survived</td></tr><tr><td>M014</td><td>app: weakened validation</td><td>site/app.js:91</td><td>survived</td></tr><tr><td>M015</td><td>app: missing await</td><td>site/app.js:11</td><td>killed (12 failed)</td></tr><tr><td>M016</td><td>app: wrong field</td><td>site/app.js:24</td><td>killed (12 failed)</td></tr><tr><td>M017</td><td>app: boundary change</td><td>site/app.js:54</td><td>killed (1 failed)</td></tr><tr><td>M018</td><td>app: swapped steps</td><td>site/app.js:84</td><td>survived</td></tr><tr><td>M019</td><td>app: weakened validation</td><td>site/app.js:35</td><td>survived</td></tr><tr><td>M020</td><td>app: missing await</td><td>site/app.js:99</td><td>killed (3 failed)</td></tr><tr><td>M021</td><td>app: wrong field</td><td>site/app.js:64</td><td>killed (3 failed)</td></tr><tr><td>M022</td><td>app: boundary change</td><td>site/app.js:116</td><td>killed (4 failed)</td></tr><tr><td>M023</td><td>app: swapped steps</td><td>site/app.js:59</td><td>killed (1 failed)</td></tr><tr><td>M024</td><td>app: weakened validation</td><td>site/app.js:110</td><td>survived</td></tr><tr><td>M025</td><td>app: wrong field</td><td>site/app.js:54</td><td>killed (1 failed)</td></tr><tr><td>M026</td><td>app: swapped steps</td><td>site/app.js:54</td><td>survived</td></tr><tr><td>M027</td><td>app: wrong field</td><td>site/app.js:54</td><td>survived</td></tr><tr><td>M028</td><td>app: swapped steps</td><td>site/app.js:92</td><td>killed (1 failed)</td></tr><tr><td>M029</td><td>app: wrong field</td><td>site/app.js:45</td><td>killed (1 failed)</td></tr><tr><td>M030</td><td>app: swapped steps</td><td>site/app.js:83</td><td>survived</td></tr><tr><td>M031</td><td>app: wrong field</td><td>src/server.ts:50</td><td>killed (1 failed)</td></tr><tr><td>M032</td><td>app: wrong field</td><td>site/app.js:78</td><td>killed (2 failed)</td></tr><tr><td>M033</td><td>app: wrong field</td><td>site/app.js:105</td><td>killed (3 failed)</td></tr><tr><td>M034</td><td>test: wrong product used</td><td>tests/ui/products.spec.ts:13</td><td>killed (1 failed)</td></tr><tr><td>M035</td><td>test: plausible wrong number</td><td>tests/ui/cart.spec.ts:23</td><td>killed (1 failed)</td></tr><tr><td>M036</td><td>test: wrong letter case</td><td>tests/ui/checkout.spec.ts:36</td><td>survived</td></tr><tr><td>M037</td><td>test: checks wrong element</td><td>tests/ui/products.spec.ts:29</td><td>killed (1 failed)</td></tr><tr><td>M038</td><td>test: swapped steps</td><td>tests/ui/checkout.spec.ts:35</td><td>survived</td></tr><tr><td>M039</td><td>test: wrong product used</td><td>tests/ui/cart.spec.ts:42</td><td>survived</td></tr><tr><td>M040</td><td>test: plausible wrong number</td><td>tests/ui/cart.spec.ts:30</td><td>killed (1 failed)</td></tr><tr><td>M041</td><td>test: wrong letter case</td><td>tests/ui/login.spec.ts:8</td><td>survived</td></tr><tr><td>M042</td><td>test: checks wrong element</td><td>tests/ui/login.spec.ts:18</td><td>killed (1 failed)</td></tr><tr><td>M043</td><td>test: swapped steps</td><td>tests/ui/checkout.spec.ts:26</td><td>survived</td></tr><tr><td>M044</td><td>test: wrong product used</td><td>tests/ui/cart.spec.ts:34</td><td>killed (1 failed)</td></tr><tr><td>M045</td><td>test: plausible wrong number</td><td>tests/ui/cart.spec.ts:16</td><td>killed (1 failed)</td></tr><tr><td>M046</td><td>test: wrong letter case</td><td>tests/ui/login.spec.ts:22</td><td>survived</td></tr><tr><td>M047</td><td>test: checks wrong element</td><td>tests/ui/login.spec.ts:10</td><td>killed (1 failed)</td></tr><tr><td>M048</td><td>test: swapped steps</td><td>tests/ui/cart.spec.ts:42</td><td>killed (1 failed)</td></tr><tr><td>M049</td><td>test: wrong product used</td><td>tests/ui/checkout.spec.ts:35</td><td>survived</td></tr><tr><td>M050</td><td>test: plausible wrong number</td><td>tests/ui/products.spec.ts:18</td><td>killed (1 failed)</td></tr><tr><td>M051</td><td>test: wrong letter case</td><td>tests/ui/login.spec.ts:23</td><td>survived</td></tr><tr><td>M052</td><td>test: checks wrong element</td><td>tests/ui/checkout.spec.ts:14</td><td>killed (1 failed)</td></tr><tr><td>M053</td><td>test: swapped steps</td><td>tests/ui/login.spec.ts:22</td><td>survived</td></tr><tr><td>M054</td><td>test: wrong product used</td><td>tests/ui/cart.spec.ts:14</td><td>killed (1 failed)</td></tr><tr><td>M055</td><td>test: wrong letter case</td><td>tests/ui/cart.spec.ts:28</td><td>survived</td></tr><tr><td>M056</td><td>test: checks wrong element</td><td>tests/ui/checkout.spec.ts:15</td><td>killed (1 failed)</td></tr><tr><td>M057</td><td>test: swapped steps</td><td>tests/ui/login.spec.ts:15</td><td>survived</td></tr><tr><td>M058</td><td>test: wrong product used</td><td>tests/ui/cart.spec.ts:36</td><td>killed (1 failed)</td></tr><tr><td>M059</td><td>test: wrong letter case</td><td>tests/ui/login.spec.ts:9</td><td>survived</td></tr><tr><td>M060</td><td>test: checks wrong element</td><td>tests/ui/products.spec.ts:23</td><td>killed (1 failed)</td></tr><tr><td>M061</td><td>test: swapped steps</td><td>tests/ui/login.spec.ts:23</td><td>survived</td></tr><tr><td>M062</td><td>test: wrong product used</td><td>tests/ui/cart.spec.ts:27</td><td>killed (1 failed)</td></tr><tr><td>M063</td><td>test: wrong letter case</td><td>tests/ui/products.spec.ts:22</td><td>survived</td></tr><tr><td>M064</td><td>test: checks wrong element</td><td>tests/ui/checkout.spec.ts:37</td><td>killed (1 failed)</td></tr><tr><td>M065</td><td>test: swapped steps</td><td>tests/ui/checkout.spec.ts:13</td><td>survived</td></tr><tr><td>M066</td><td>test: wrong product used</td><td>tests/ui/cart.spec.ts:38</td><td>killed (1 failed)</td></tr><tr><td>M067</td><td>test: wrong letter case</td><td>tests/ui/login.spec.ts:15</td><td>killed (1 failed)</td></tr><tr><td>M068</td><td>test: checks wrong element</td><td>tests/ui/products.spec.ts:17</td><td>killed (1 failed)</td></tr><tr><td>M069</td><td>test: swapped steps</td><td>tests/ui/cart.spec.ts:28</td><td>killed (1 failed)</td></tr><tr><td>M070</td><td>test: wrong product used</td><td>tests/ui/products.spec.ts:17</td><td>killed (1 failed)</td></tr><tr><td>M071</td><td>test: wrong letter case</td><td>tests/ui/login.spec.ts:16</td><td>killed (1 failed)</td></tr><tr><td>M072</td><td>test: checks wrong element</td><td>tests/ui/checkout.spec.ts:38</td><td>killed (1 failed)</td></tr><tr><td>M073</td><td>test: swapped steps</td><td>tests/ui/cart.spec.ts:34</td><td>survived</td></tr><tr><td>M074</td><td>test: wrong product used</td><td>tests/ui/checkout.spec.ts:26</td><td>survived</td></tr><tr><td>M075</td><td>test: checks wrong element</td><td>tests/ui/checkout.spec.ts:28</td><td>killed (1 failed)</td></tr><tr><td>M076</td><td>test: swapped steps</td><td>tests/ui/login.spec.ts:9</td><td>survived</td></tr><tr><td>M077</td><td>test: wrong product used</td><td>tests/ui/products.spec.ts:23</td><td>killed (1 failed)</td></tr><tr><td>M078</td><td>test: checks wrong element</td><td>tests/ui/checkout.spec.ts:21</td><td>killed (1 failed)</td></tr><tr><td>M079</td><td>test: swapped steps</td><td>tests/ui/login.spec.ts:8</td><td>survived</td></tr><tr><td>M080</td><td>test: wrong product used</td><td>tests/ui/checkout.spec.ts:19</td><td>survived</td></tr><tr><td>M081</td><td>test: checks wrong element</td><td>tests/ui/checkout.spec.ts:22</td><td>killed (1 failed)</td></tr><tr><td>M082</td><td>test: swapped steps</td><td>tests/ui/checkout.spec.ts:19</td><td>survived</td></tr><tr><td>M083</td><td>test: wrong product used</td><td>tests/api/products-api.spec.ts:16</td><td>killed (1 failed)</td></tr></tbody>
+  </table></div></details>
+</div></body></html>

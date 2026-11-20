@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QA Shop</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>QA Shop</h1>
+    <form id="login-form" aria-label="Login">
+      <label for="username">Username</label>
+      <input id="username" name="username" data-testid="username">
+      <input id="password" name="password" type="password" data-testid="password">
+      <button type="submit" data-testid="login-button">Log in</button>
+      <span id="login-message" data-testid="login-message"></span>
+    </form>
+  </header>
+
+  <main>
+    <section id="products-section">
+      <h2>Products</h2>
+      <label for="search">Search</label>
+      <input id="search" data-testid="search" placeholder="Search products...">
+      <p id="search-message" data-testid="search-message"></p>
+      <ul id="product-list" data-testid="product-list"></ul>
+    </section>
+
+    <section id="cart-section">
+      <h2>Your Cart</h2>
+      <ul id="cart-list" data-testid="cart-list"></ul>
+      <label for="discount">Discount code</label>
+      <input id="discount" data-testid="discount-input">
+      <button id="apply-discount" data-testid="apply-discount">Apply</button>
+      <p>Total: $<span id="cart-total" data-testid="cart-total">0.00</span></p>
+
+      <h2>Checkout</h2>
+      <form id="checkout-form">
+        <label for="email">Email</label>
+        <input id="email" data-testid="email">
+        <button type="submit" data-testid="checkout-button">Place order</button>
+        <p id="checkout-message" data-testid="checkout-message"></p>
+      </form>
+    </section>
+
+    <section id="account-section">
+      <h2>My account</h2>
+      <p>Status: <span id="account-status" data-testid="account-status">Not signed in</span></p>
+      <form id="account-form" aria-label="Account sign-in">
+        <label for="account-username">Username</label>
+        <input id="account-username" data-testid="account-username" autocomplete="username">
+        <label for="account-password">Password</label>
+        <input id="account-password" type="password" data-testid="account-password" autocomplete="current-password">
+        <button type="submit" data-testid="account-login-button">Sign in</button>
+      </form>
+      <form id="code-form" aria-label="2FA code" hidden>
+        <label for="account-code">Authenticator code</label>
+        <input id="account-code" data-testid="account-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        <button type="submit" data-testid="account-verify-button">Verify</button>
+      </form>
+      <p>
+        <button type="button" id="passkey-login" data-testid="passkey-login-button">Sign in with a passkey</button>
+        <button type="button" id="passkey-create" data-testid="passkey-create-button" hidden>Create a passkey</button>
+        <button type="button" id="account-logout" data-testid="account-logout-button" hidden>Sign out</button>
+      </p>
+      <p id="account-message" data-testid="account-message"></p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

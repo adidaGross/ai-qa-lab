@@ -1,0 +1,69 @@
+{
+  "description": "Answer key: tests that are broken ON PURPOSE (the test is wrong, not the app). The AI must NEVER read this file. It is only used afterwards to score the AI.",
+  "brokenTests": [
+    {
+      "id": "TEST-001",
+      "file": "tests/ui/products.spec.ts",
+      "test": "shows product names in the list",
+      "problem": "wrong-selector",
+      "explanation": "Uses data-testid 'product-title', but the page uses 'product-name'.",
+      "fix": "page.getByTestId(\"product-name\")"
+    },
+    {
+      "id": "TEST-002",
+      "file": "tests/ui/products.spec.ts",
+      "test": "shows the correct price for Notebook",
+      "problem": "wrong-expected-value",
+      "explanation": "Typo in the expected value: $4.57 instead of $4.75 (the real price in the product data).",
+      "fix": "toHaveText(\"$4.75\")"
+    },
+    {
+      "id": "TEST-003",
+      "file": "tests/ui/checkout.spec.ts",
+      "test": "checkout succeeds for a customer email",
+      "problem": "bad-test-data",
+      "explanation": "'customer@example' is not a valid email (no domain ending), so the app correctly rejects it.",
+      "fix": "fill(\"customer@example.com\")"
+    },
+    {
+      "id": "TEST-004",
+      "file": "tests/ui/checkout.spec.ts",
+      "test": "order confirmation shows the customer's email",
+      "problem": "wrong-step-order",
+      "explanation": "Clicks 'Place order' BEFORE adding a product, so the app correctly says the cart is empty.",
+      "fix": "Call addToCart(...) before filling the email and clicking checkout"
+    },
+    {
+      "id": "TEST-005",
+      "file": "tests/ui/login.spec.ts",
+      "test": "login succeeds with correct credentials",
+      "problem": "missing-wait",
+      "explanation": "Reads textContent() immediately after clicking, before the server answers. textContent() does not wait or retry.",
+      "fix": "await expect(page.getByTestId(\"login-message\")).toHaveText(\"Welcome, admin!\")"
+    },
+    {
+      "id": "TEST-006",
+      "file": "tests/api/products-api.spec.ts",
+      "test": "GET product by id returns that product",
+      "problem": "wrong-endpoint",
+      "explanation": "Calls /api/product/2 (singular). The real endpoint is /api/products/2.",
+      "fix": "request.get(\"/api/products/2\")"
+    },
+    {
+      "id": "TEST-007",
+      "file": "tests/auth/account.spec.ts",
+      "test": "account page shows the signed-in user after 2FA",
+      "problem": "hardcoded-otp",
+      "explanation": "Types a fixed 2FA code (492039) copied from the authenticator app when the test was written. The code changes every 30 seconds, so the test can never pass again.",
+      "fix": "page.getByTestId(\"account-code\").fill(authenticatorCode(ACCOUNT.totpSecret))"
+    },
+    {
+      "id": "TEST-008",
+      "file": "tests/security/security.spec.ts",
+      "test": "API responses disable content-type sniffing",
+      "problem": "wrong-header-case",
+      "explanation": "Reads res.headers()[\"X-Content-Type-Options\"], but Playwright returns header names in lowercase, so the value is always undefined even though the header is sent.",
+      "fix": "res.headers()[\"x-content-type-options\"]"
+    }
+  ]
+}

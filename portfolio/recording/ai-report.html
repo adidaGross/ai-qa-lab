@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI QA Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fdfcf8; --grid: #efede6; --ink: #23242a; --muted: #6a6c74; --rule: #d9d6cc; --soft: #f3f1ea;
+    --pen: #c0392b; --pass: #2e7d4f; --bug: #b3261e; --test: #9a6200; --blue: #2c5aa0;
+    --before: #fbe9e7; --before-ink: #9b2c22; --after: #e7f3ea; --after-ink: #22663f;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17181c; --grid: #202228; --ink: #e6e4de; --muted: #9c9ea6; --rule: #33353d; --soft: #1f2127;
+      --pen: #ff8a7a; --pass: #7cc49a; --bug: #f08a83; --test: #e0b45c; --blue: #8fb3ef;
+      --before: #3a2220; --before-ink: #ffb4aa; --after: #1d3326; --after-ink: #9fdcb5;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); font: 15px/1.6 var(--sans); background-color: var(--paper);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { padding: 4px 0 8px; }
+  header .file { font: 13px var(--mono); color: var(--muted); margin: 0 0 6px; }
+  header h1 { font: 600 26px/1.25 var(--sans); margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .sheet { background: var(--paper); border: 1px solid var(--rule); padding: 18px 20px; margin-top: 18px; }
+  h2 { font: 600 17px var(--mono); margin: 0 0 6px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  h2 .n { color: var(--pen); font-weight: 500; }
+  .count { font: 500 13px var(--mono); color: var(--muted); }
+  .lead { color: var(--muted); margin: 0 0 14px; font-size: 14px; }
+  .muted { color: var(--muted); } .small { font-size: 13px; }
+  code { font: 13px/1.5 var(--mono); }
+  p code { background: var(--soft); padding: 1px 5px; }
+
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 20px; margin: 8px 0 14px; }
+  .summary dt { font: 12px var(--mono); color: var(--muted); }
+  .summary dd { margin: 0; font: 600 24px var(--mono); }
+  .summary dd small { display: block; font: 400 12px var(--sans); color: var(--muted); }
+  .summary dd.bug { color: var(--bug); } .summary dd.test { color: var(--test); } .summary dd.ok { color: var(--pass); }
+  .bar { display: flex; height: 10px; border: 1px solid var(--ink); background: var(--paper); }
+  .seg-pass { background: var(--pass); } .seg-bug { background: var(--bug); } .seg-test { background: var(--test); }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 8px 0 0; font: 12px var(--mono); color: var(--muted); }
+  .key { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--ink); }
+
+  .ticket { border: 1px solid var(--ink); background: var(--paper); margin-bottom: 10px; }
+  .ticket > summary { cursor: pointer; list-style: none; display: block; }
+  .ticket > summary::-webkit-details-marker { display: none; }
+  .ticket-head { display: flex; gap: 12px; align-items: center; padding: 5px 12px; border-bottom: 1px solid var(--ink); font: 12px var(--mono); }
+  .ticket-head::after { content: "open +"; margin-left: auto; color: var(--muted); }
+  .ticket[open] .ticket-head::after { content: "close −"; }
+  .id { font-weight: 600; }
+  .sev, .cat { text-transform: lowercase; }
+  .sev-critical, .sev-high { color: var(--bug); font-weight: 600; } .sev-medium { color: var(--test); font-weight: 600; } .sev-low { color: var(--muted); }
+  .cat { color: var(--blue); }
+  .status-ok { color: var(--pass); font-weight: 600; } .status-bad { color: var(--bug); font-weight: 600; }
+  .ticket-title { display: block; padding: 8px 12px 9px; font-weight: 600; }
+  .ticket-body { padding: 2px 12px 12px; border-top: 1px dashed var(--rule); }
+  pre { background: var(--soft); padding: 10px 12px; overflow-x: auto; margin: 0; white-space: pre; border: 1px solid var(--rule); }
+  .code-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  @media (max-width: 760px) { .code-pair { grid-template-columns: 1fr; } }
+  .code-pair > div { min-width: 0; }
+  .code-title { font: 600 12px var(--mono); padding: 3px 10px; border: 1px solid var(--rule); border-bottom: 0; }
+  .code-title.before { background: var(--before); color: var(--before-ink); }
+  .code-title.after { background: var(--after); color: var(--after-ink); }
+  .inner { margin: 8px 0; } .inner summary { cursor: pointer; color: var(--blue); font: 13px var(--mono); }
+
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px dashed var(--rule); }
+  th { font: 500 12px var(--mono); color: var(--muted); }
+  td.right { color: var(--pass); font-weight: 600; } td.wrong { color: var(--bug); font-weight: 600; }
+  footer { margin-top: 24px; color: var(--muted); font: 12px var(--mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="file">reports/ai-report.html</p>
+    <h1>AI QA report: QA Shop</h1>
+    <p>20 Nov 2026, 09:30 · model claude-opus-5-5 · run with a Claude subscription (API equivalent $1.133)</p>
+  </header>
+  
+<section class="sheet">
+  <h2><span class="n">01</span> Run summary</h2>
+  <dl class="summary">
+    <div><dt>tests run</dt><dd>37 <small>14 passed · 23 failed</small></dd></div>
+    <div><dt>app bugs</dt><dd class="bug">15 <small>real defects in the shop</small></dd></div>
+    <div><dt>broken tests</dt><dd class="test">8 <small>problems in the tests</small></dd></div>
+    <div><dt>healed</dt><dd class="ok">8/8 <small>pass after the AI fix</small></dd></div>
+    <div><dt>AI accuracy</dt><dd class="ok">23/23 <small>vs the answer key</small></dd></div>
+  </dl>
+  <div class="bar" role="img" aria-label="14 passed, 15 app bugs, 8 broken tests">
+    <span class="seg seg-pass" style="width:37.83783783783784%"></span>
+    <span class="seg seg-bug" style="width:40.54054054054054%"></span>
+    <span class="seg seg-test" style="width:21.62162162162162%"></span>
+  </div>
+  <p class="legend"><span><i class="key seg-pass"></i>passed 14</span><span><i class="key seg-bug"></i>app bug 15</span><span><i class="key seg-test"></i>broken test 8</span></p>
+</section>
+  
+<section class="sheet">
+  <h2><span class="n">02</span> App bugs <span class="count">15</span></h2>
+  <p class="lead">The tests were right and the shop is wrong. Sorted by severity, each with the AI's suggested fix. Click a ticket to open it.</p>
+  
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 01</span><span class="sev sev-critical">critical</span><span class="cat">security</span></span>
+      <span class="ticket-title">You can log in as &quot;admin&quot; with any password at all, because the server only checks that the username exists and never checks the password.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “login fails with a wrong password” <span class="muted">ui/login.spec.ts:22</span></p>
+      <p><b>Root cause:</b> The POST /api/login handler in src/server.ts looks up the user by username only: `users.find((u) =&gt; u.username === username)`. It never compares the password, so any password works for an existing username and the server returns `Welcome, admin!`.</p>
+      <p><b>Evidence:</b> The test fills username &quot;admin&quot; and password &quot;wrong-password&quot;, then waits for &quot;Invalid username or password&quot;. The page showed &quot;Welcome, admin!&quot; instead. The message comes from the server&#39;s response (`$(&quot;login-message&quot;).textContent = data.message`), and in server.ts the only check is `if (user)`. That check only confirms the username exists. Nothing in the handler reads `password`. The test is correct: a login must reject a wrong password. It also waits properly, because toHaveText retries, and the call log shows the message going from empty to the server&#39;s reply.</p>
+      <p><b>Suggested fix in</b> <code>src/server.ts</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  const user = users.find((u) =&gt; u.username === username);</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  const user = users.find((u) =&gt; u.username === username &amp;&amp; u.password === password);</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 02</span><span class="sev sev-high">high</span><span class="cat">security</span></span>
+      <span class="ticket-title">The server accepts 2FA codes up to 10 minutes old, so a code from 5 minutes ago still signs the user in when it should be rejected.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “an expired 2FA code is rejected” <span class="muted">auth/account.spec.ts:20</span></p>
+      <p><b>Root cause:</b> In src/account.ts, isValidCode() loops `for (let step = -20; step &lt;= 1; step++)`, so it accepts the current 30-second window plus the 20 windows before it. That is about 10 minutes of past codes. The usual RFC 6238 practice is to allow ±1 window for clock drift, which is about 30 seconds either way. A code made 5 minutes ago falls in window now-10, which is inside the accepted range, so the server treats the expired code as valid and starts a session.</p>
+      <p><b>Evidence:</b> The test builds a code for Date.now() - 5 minutes, which is window offset -10. The loop checks offsets -20 through +1, so offset -10 matches. The error log shows account-message changing from &quot;Enter the 6-digit code...&quot; to &quot;Signed in as dana&quot;, so the server answered verify-code with ok:true and called startSession. The test&#39;s expectation is right: an expired one-time code must not log the user in. The code comment says the window covers phone clocks being slightly out of sync, which only justifies a step or so, not 10 minutes.</p>
+      <p><b>Suggested fix in</b> <code>src/account.ts</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  for (let step = -20; step &lt;= 1; step++) {</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  for (let step = -1; step &lt;= 1; step++) {</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 03</span><span class="sev sev-high">high</span><span class="cat">security</span></span>
+      <span class="ticket-title">Signing out only deletes the cookie in the browser and leaves the session active on the server, so a copied session cookie still works after logout.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “signing out ends the session on the server” <span class="muted">auth/account.spec.ts:62</span></p>
+      <p><b>Root cause:</b> The /api/account/logout handler calls res.clearCookie(&quot;sid&quot;) but never removes the session id from the server-side `sessions` map. currentUser() still finds the username for that sid, so /api/account/me returns 200 for anyone who still has the old cookie.</p>
+      <p><b>Evidence:</b> src/account.ts logout handler: `res.clearCookie(&quot;sid&quot;); res.json({ ok: true, message: &quot;Signed out&quot; });` contains no `sessions.delete(...)`. /api/account/me returns 401 only when `sessions.get(sid)` is undefined. The test reused the pre-logout cookie and got 200 instead of 401.</p>
+      <p><b>Suggested fix in</b> <code>src/account.ts</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  app.post(&quot;/api/account/logout&quot;, (req: Request, res: Response) =&gt; {
+    res.clearCookie(&quot;sid&quot;);</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  app.post(&quot;/api/account/logout&quot;, (req: Request, res: Response) =&gt; {
+    sessions.delete(readCookie(req, &quot;sid&quot;) ?? &quot;&quot;);
+    res.clearCookie(&quot;sid&quot;);</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 04</span><span class="sev sev-high">high</span><span class="cat">performance</span></span>
+      <span class="ticket-title">Each sign-in hashes the password in a way that stalls the whole server, so product browsing slows down for everyone while people log in.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “browsing stays fast while many users sign in” <span class="muted">load/load.spec.ts:21</span></p>
+      <p><b>Root cause:</b> The /api/account/login route in src/account.ts checks the password with crypto.scryptSync. scrypt is meant to be CPU-expensive, and the Sync version runs on Node&#39;s only main thread. While it hashes, no other request can be answered, so 10 users signing in over and over hold up /api/products for everyone else. An async version (promisify(crypto.scrypt)) is already defined in the file but the route never uses it.</p>
+      <p><b>Evidence:</b> Browsing during the sign-ins had p50 150 ms, p95 459 ms and max 1188 ms, although /api/products only returns a fixed in-memory array. In src/account.ts the login route calls `crypto.scryptSync(String(password ?? &quot;&quot;), SALT, 64)`, and a comment in the same file says hashing takes &quot;tens of milliseconds of CPU per sign-in&quot;. `const scrypt = promisify(crypto.scrypt)` is declared and never used. The load test without sign-ins (30 users, p95 under 300 ms) is not the one failing, so the products endpoint is fast on its own.</p>
+      <p><b>Suggested fix in</b> <code>src/account.ts</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>    const attempt = crypto.scryptSync(String(password ?? &quot;&quot;), SALT, 64);</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>    const attempt = await scrypt(String(password ?? &quot;&quot;), SALT, 64);</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 05</span><span class="sev sev-high">high</span><span class="cat">security</span></span>
+      <span class="ticket-title">The server allows 50 wrong 2FA codes before blocking instead of 5, so attackers can brute-force the 6-digit code far more easily than intended.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “2FA code guessing is blocked after 5 wrong codes” <span class="muted">security/security.spec.ts:31</span></p>
+      <p><b>Root cause:</b> MAX_CODE_ATTEMPTS in src/account.ts is set to 50. The verify-code route only returns 429 when wrongCodes &gt;= MAX_CODE_ATTEMPTS, so after 5 wrong codes the 6th attempt is still evaluated and gets 401 instead of being refused.</p>
+      <p><b>Evidence:</b> src/account.ts: `const MAX_CODE_ATTEMPTS = 50;` with check `if ((wrongCodes.get(ticket) ?? 0) &gt;= MAX_CODE_ATTEMPTS) { ... res.status(429) ... }`. After 5 failures the count is 5, and 5 &gt;= 50 is false, so the request falls through to isValidCode and gets 401 &#39;Invalid code&#39;. That matches the error &#39;Expected: 429, Received: 401&#39;. Related: isValidCode also accepts 22 time windows (step -20..1), which further weakens brute-force protection.</p>
+      <p><b>Suggested fix in</b> <code>src/account.ts</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>const MAX_CODE_ATTEMPTS = 50;</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>const MAX_CODE_ATTEMPTS = 5;</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 06</span><span class="sev sev-high">high</span><span class="cat">functional</span></span>
+      <span class="ticket-title">The cart total ignores item quantities, so two Coffee Mugs are charged as one ($12.50 instead of $25.00).</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “cart total multiplies price by quantity” <span class="muted">ui/cart.spec.ts:19</span></p>
+      <p><b>Root cause:</b> cartTotal() in site/app.js adds up item.price for each cart line without multiplying by item.quantity. Any line with a quantity above 1 is therefore undercounted.</p>
+      <p><b>Evidence:</b> The quantity check passed (cart-item-qty showed &quot;2&quot;), so addToCart correctly raised the existing line&#39;s quantity. Coffee Mug costs 12.5 (src/server.ts), but the total showed &quot;12.50&quot; instead of &quot;25.00&quot;. The code is `cart.reduce((sum, item) =&gt; sum + item.price, 0)`, which never uses quantity.</p>
+      <p><b>Suggested fix in</b> <code>site/app.js</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  const subtotal = cart.reduce((sum, item) =&gt; sum + item.price, 0);</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  const subtotal = cart.reduce((sum, item) =&gt; sum + item.price * item.quantity, 0);</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 07</span><span class="sev sev-high">high</span><span class="cat">functional</span></span>
+      <span class="ticket-title">The SAVE10 discount code takes off only 1% instead of 10%, so customers pay $39.50 for a $39.90 lamp when they should pay $35.91.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “discount code SAVE10 gives 10% off” <span class="muted">ui/cart.spec.ts:26</span></p>
+      <p><b>Root cause:</b> In site/app.js the apply-discount handler sets `discountRate = 0.01` for the code SAVE10. That is 1%, not 10%. cartTotal() then works out subtotal * (1 - 0.01) = 39.90 * 0.99 = 39.501, which displays as &quot;39.50&quot;. The correct rate is 0.1.</p>
+      <p><b>Evidence:</b> Product data: Desk Lamp is 39.9. The app code has `if (code === &quot;SAVE10&quot;) discountRate = 0.01;`. The received total &quot;39.50&quot; is exactly 39.90 * 0.99 = 39.501 rounded to 2 decimals. The expected &quot;35.91&quot; is 39.90 * 0.9, which is what a code called SAVE10 should give. The test&#39;s steps are correct: it adds one item, fills the existing discount-input, and clicks the existing apply-discount button. All the selectors exist in index.html, and the total did re-render (it changed from 39.90 to 39.50), so this is not a timing problem.</p>
+      <p><b>Suggested fix in</b> <code>site/app.js</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  if (code === &quot;SAVE10&quot;) discountRate = 0.01;</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  if (code === &quot;SAVE10&quot;) discountRate = 0.1;</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 08</span><span class="sev sev-high">high</span><span class="cat">functional</span></span>
+      <span class="ticket-title">Clicking &quot;Remove&quot; on a cart item deletes the item after it, so the wrong product gets removed from the cart.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “remove deletes the clicked item” <span class="muted">ui/cart.spec.ts:33</span></p>
+      <p><b>Root cause:</b> removeFromCart(index) in site/app.js calls cart.splice(index + 1, 1). That is an off-by-one error: it removes the item after the one the user clicked. When Coffee Mug (index 0) is removed, index 1 (Desk Lamp) is deleted and Coffee Mug stays in the cart.</p>
+      <p><b>Evidence:</b> The test adds Coffee Mug (index 0) and Desk Lamp (index 1), then clicks Remove on the Coffee Mug row. renderCart sets that button&#39;s handler to removeFromCart(0), and the function runs cart.splice(0 + 1, 1), which deletes Desk Lamp. Playwright found exactly one item left, &quot;Coffee Mug&quot;, where the test expected &quot;Desk Lamp&quot;. The test&#39;s steps and selectors are correct: the mug row was found and its Remove button was clicked.</p>
+      <p><b>Suggested fix in</b> <code>site/app.js</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  cart.splice(index + 1, 1);</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  cart.splice(index, 1);</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 09</span><span class="sev sev-high">high</span><span class="cat">security</span></span>
+      <span class="ticket-title">The search &quot;no results&quot; message puts the user&#39;s search text into the page as HTML. Anyone who can control the search text can run their own script in the page (XSS).</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “search shows user input as plain text” <span class="muted">ui/products.spec.ts:26</span></p>
+      <p><b>Root cause:</b> In site/app.js the search input handler builds the message from the raw search term and assigns it with `$(&quot;search-message&quot;).innerHTML = ...`. The browser reads the term as markup, so `&lt;img src=x onerror=...&gt;` turns into a real image element. Its onerror handler runs, and the visible text only shows `No results for &quot;&quot;`. User input must be shown with textContent so it stays plain text.</p>
+      <p><b>Evidence:</b> The error shows the received text `No results for &quot;&quot;`: the `&lt;img ...&gt;` tag is missing from the text because it was turned into a DOM element. app.js has: `$(&quot;search-message&quot;).innerHTML = found.length === 0 ? \`No results for &quot;${term}&quot;\` : &quot;&quot;;`. The test correctly expects the input to appear as literal text.</p>
+      <p><b>Suggested fix in</b> <code>site/app.js</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  $(&quot;search-message&quot;).innerHTML =
+    found.length === 0 ? `No results for &quot;${term}&quot;` : &quot;&quot;;</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  $(&quot;search-message&quot;).textContent =
+    found.length === 0 ? `No results for &quot;${term}&quot;` : &quot;&quot;;</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 10</span><span class="sev sev-medium">medium</span><span class="cat">api</span></span>
+      <span class="ticket-title">When someone asks the shop&#39;s API for a product that doesn&#39;t exist, it says &quot;OK&quot; (200) and sends back an empty object when it should say &quot;not found&quot; (404).</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “GET missing product returns 404” <span class="muted">api/products-api.spec.ts:19</span></p>
+      <p><b>Root cause:</b> The GET /api/products/:id handler in src/server.ts always answers with status 200. When products.find() finds nothing, it sends an empty object `{}` with that 200 status. By REST and HTTP rules, a missing resource should get a 404. The test is right; the handler is wrong.</p>
+      <p><b>Evidence:</b> src/server.ts: `res.status(200).json(product ?? {});`. The product list only has ids 1-5, so id 999 matches nothing, and the hardcoded 200 is sent anyway. The test calls the correct URL (/api/products/999, which matches the route) and expects 404. Playwright got 200 instead.</p>
+      <p><b>Suggested fix in</b> <code>src/server.ts</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  res.status(200).json(product ?? {});</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  if (!product) {
+    res.status(404).json({ error: &quot;Product not found&quot; });
+    return;
+  }
+  res.json(product);</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 11</span><span class="sev sev-medium">medium</span><span class="cat">security</span></span>
+      <span class="ticket-title">When the server gets a broken request, its error message includes the full internal stack trace and file paths, which gives attackers details about how the server is built.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “error responses do not reveal server internals” <span class="muted">security/security.spec.ts:41</span></p>
+      <p><b>Root cause:</b> The global Express error handler in src/server.ts puts err.stack in the JSON response. For a body-parser JSON syntax error, the stack contains absolute paths under node_modules and &#39;at fn (file:line)&#39; frames, so server internals leak to any client.</p>
+      <p><b>Evidence:</b> src/server.ts error handler: `res.status(err.status ?? 500).json({ error: err.message, stack: err.stack });`. The status assertion (400) passed because body-parser sets err.status = 400. The failure is on the `body.includes(&quot;node_modules&quot;)` check: &quot;the error response contains server file paths (node_modules)&quot;, Expected false, Received true. The stack comes from body-parser inside node_modules.</p>
+      <p><b>Suggested fix in</b> <code>src/server.ts</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  res.status(err.status ?? 500).json({ error: err.message, stack: err.stack });</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  const status = err.status ?? 500;
+  res.status(status).json({ error: status &lt; 500 ? &quot;Bad request&quot; : &quot;Internal server error&quot; });</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 12</span><span class="sev sev-medium">medium</span><span class="cat">validation</span></span>
+      <span class="ticket-title">In the cart, the &quot;-&quot; button keeps lowering the quantity past 1, so the cart can show 0 or negative quantities.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “quantity cannot go below 1” <span class="muted">ui/cart.spec.ts:41</span></p>
+      <p><b>Root cause:</b> changeQuantity() in site/app.js adds the delta to the item&#39;s quantity without checking for a lower limit. Starting at 1, two &quot;-&quot; clicks give 0 and then -1. Business rules say a cart line quantity must never go below 1.</p>
+      <p><b>Evidence:</b> The app code is `function changeQuantity(index, delta) { cart[index].quantity += delta; renderCart(); }` and has no lower bound. The test adds one Coffee Mug (qty 1) and clicks qty-minus twice. Playwright then read `&lt;span data-testid=&quot;cart-item-qty&quot;&gt;-1&lt;/span&gt;`, which is exactly 1 - 1 - 1. The selectors in the test exist in the cart markup (qty-minus, cart-item-qty), and the steps run in a valid order.</p>
+      <p><b>Suggested fix in</b> <code>site/app.js</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>function changeQuantity(index, delta) {
+  cart[index].quantity += delta;
+  renderCart();
+}</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>function changeQuantity(index, delta) {
+  cart[index].quantity = Math.max(1, cart[index].quantity + delta);
+  renderCart();
+}</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 13</span><span class="sev sev-medium">medium</span><span class="cat">validation</span></span>
+      <span class="ticket-title">The checkout accepts email addresses without an &quot;@&quot; (like &quot;hello.world&quot;) because its email check only looks for a dot.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “checkout rejects an email without @” <span class="muted">ui/checkout.spec.ts:34</span></p>
+      <p><b>Root cause:</b> isValidEmail() in site/app.js returns email.includes(&quot;.&quot;), so any string containing a dot counts as a valid email. &quot;hello.world&quot; passes, and the checkout handler takes the success branch instead of showing &quot;Please enter a valid email&quot;.</p>
+      <p><b>Evidence:</b> site/app.js: `function isValidEmail(email) { return email.includes(&quot;.&quot;); }`. The checkout handler only shows &quot;Please enter a valid email&quot; when !isValidEmail(email). The test adds Notebook to the cart (so the cart isn&#39;t empty), enters &quot;hello.world&quot;, and receives &quot;Order placed! Confirmation sent to hello.world&quot;. That means the validation passed even though there is no &quot;@&quot;.</p>
+      <p><b>Suggested fix in</b> <code>site/app.js</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>function isValidEmail(email) {
+  return email.includes(&quot;.&quot;);
+}</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 14</span><span class="sev sev-medium">medium</span><span class="cat">accessibility</span></span>
+      <span class="ticket-title">The password box in the header login form has no label, so screen readers can&#39;t tell users what the field is for.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “password field has an accessible label” <span class="muted">ui/login.spec.ts:29</span></p>
+      <p><b>Root cause:</b> In site/index.html, the header login form gives the username input a &lt;label for=&quot;username&quot;&gt;, but the password input (id=&quot;password&quot;) has no label element, no aria-label and no aria-labelledby. Its accessible name is therefore an empty string. Form fields need labels (WCAG 1.3.1 / 4.1.2).</p>
+      <p><b>Evidence:</b> Playwright resolved the locator to &lt;input id=&quot;password&quot; name=&quot;password&quot; type=&quot;password&quot; data-testid=&quot;password&quot;/&gt; and got accessible name &quot;&quot; (received &quot;&quot; instead of &quot;Password&quot;). index.html has `&lt;label for=&quot;username&quot;&gt;Username&lt;/label&gt;` right before the username input, but nothing labels the password input. The account form elsewhere does it correctly with `&lt;label for=&quot;account-password&quot;&gt;Password&lt;/label&gt;`. The test checks this specific field by test id, so its approach is valid.</p>
+      <p><b>Suggested fix in</b> <code>site/index.html</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>      &lt;input id=&quot;password&quot; name=&quot;password&quot; type=&quot;password&quot; data-testid=&quot;password&quot;&gt;</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>      &lt;label for=&quot;password&quot;&gt;Password&lt;/label&gt;
+      &lt;input id=&quot;password&quot; name=&quot;password&quot; type=&quot;password&quot; data-testid=&quot;password&quot;&gt;</code></pre></div>
+  </div>
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">BUG 15</span><span class="sev sev-medium">medium</span><span class="cat">functional</span></span>
+      <span class="ticket-title">Product search only matches exact capitals, so searching &quot;mug&quot; doesn&#39;t find &quot;Coffee Mug&quot;.</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>Failing test:</b> “search finds products regardless of capitalization” <span class="muted">ui/products.spec.ts:21</span></p>
+      <p><b>Root cause:</b> The search input handler in site/app.js filters with `p.name.includes(term)`. JavaScript&#39;s String.prototype.includes is case-sensitive, so the lowercase term &quot;mug&quot; doesn&#39;t match &quot;Coffee Mug&quot; (capital M) and the filtered list is empty. Shop search should normally ignore capitalization.</p>
+      <p><b>Evidence:</b> app.js: `const found = products.filter((p) =&gt; p.name.includes(term));` has no case normalization. Product data in server.ts: `{ id: 1, name: &quot;Coffee Mug&quot;, ... }`. The test fills &quot;mug&quot; and expects [&quot;Coffee Mug&quot;]. Playwright received `Array []` and the locator resolved to 0 elements 22 times, so the list rendered with zero items. The data-testid &quot;product-name&quot; exists in renderProducts, so the selector is correct.</p>
+      <p><b>Suggested fix in</b> <code>site/app.js</code></p>
+  <div class="code-pair">
+    <div><div class="code-title before">current code</div><pre><code>  const found = products.filter((p) =&gt; p.name.includes(term));</code></pre></div>
+    <div><div class="code-title after">suggested fix</div><pre><code>  const found = products.filter((p) =&gt; p.name.toLowerCase().includes(term.toLowerCase()));</code></pre></div>
+  </div>
+    </div>
+  </details>
+</section>
+  
+<section class="sheet">
+  <h2><span class="n">03</span> Repaired tests <span class="count">8/8 pass</span></h2>
+  <p class="lead">The shop was right and the test was wrong. The AI wrote a corrected copy to <code>tests/healed/</code> with the same file and test name, and it was run again. The original tests are not changed: a person reviews the fix first.</p>
+  
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 01</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">GET product by id returns that product</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> The test requests &quot;/api/product/2&quot;, which is singular. The server only registers &quot;/api/products/:id&quot;, which is plural. No route matches the singular path, so the request goes past the API handlers and through express.static, and Express&#39;s default handler answers 404. The app is behaving correctly for a path that doesn&#39;t exist.</p>
+      <p><b>The fix:</b> Change the URL to the plural form, /api/products/2, which is the route the server actually defines.</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/api/products-api.spec.ts</code> <span class="muted">original: tests/api/products-api.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 200
+Received: 404</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;GET product by id returns that product&quot;, async ({ request }) =&gt; {
+  const response = await request.get(&quot;/api/product/2&quot;);
+  expect(response.status()).toBe(200);
+  const product = await response.json();
+  expect(product.name).toBe(&quot;Desk Lamp&quot;);
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;GET product by id returns that product&quot;, async ({ request }) =&gt; {
+  const response = await request.get(&quot;/api/products/2&quot;);
+  expect(response.status()).toBe(200);
+  const product = await response.json();
+  expect(product.name).toBe(&quot;Desk Lamp&quot;);
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 02</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">account page shows the signed-in user after 2FA</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> The test hardcodes the code &quot;492039&quot;. The app worked as designed: it rejected the outdated code, so no session was created. The test should work out the current code at run time with the existing authenticatorCode(ACCOUNT.totpSecret) helper.</p>
+      <p><b>The fix:</b> Work out the current code at run time with the existing authenticatorCode(ACCOUNT.totpSecret) helper instead of using a fixed code. Also wait for the 2FA code field to become visible after the password step, because the field only appears after the login response arrives.</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/auth/account.spec.ts</code> <span class="muted">original: tests/auth/account.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(locator).toHaveText(expected) failed
+
+Locator:  getByTestId(&#39;account-status&#39;)
+Expected: &quot;Signed in as dana&quot;
+Received: &quot;Not signed in&quot;
+Timeout:  2000ms
+
+Call log:
+  - Expect &quot;toHaveText&quot; getByTestId(&#39;account-status&#39;) with timeout 2000ms
+  - waiting for getByTestId(&#39;account-status&#39;)
+    21 × locator resolved to &lt;span id=&quot;account-status&quot; data-testid=&quot;account-status&quot;&gt;Not signed in&lt;/span&gt;
+       - unexpected value &quot;Not signed in&quot;
+</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;account page shows the signed-in user after 2FA&quot;, async ({ page }) =&gt; {
+  await page.getByTestId(&quot;account-username&quot;).fill(&quot;dana&quot;);
+  await page.getByTestId(&quot;account-password&quot;).fill(&quot;Str0ng-Pass!&quot;);
+  await page.getByTestId(&quot;account-login-button&quot;).click();
+  await page.getByTestId(&quot;account-code&quot;).fill(&quot;492039&quot;);
+  await page.getByTestId(&quot;account-verify-button&quot;).click();
+  await expect(page.getByTestId(&quot;account-status&quot;)).toHaveText(&quot;Signed in as dana&quot;);
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;account page shows the signed-in user after 2FA&quot;, async ({ page }) =&gt; {
+  await page.getByTestId(&quot;account-username&quot;).fill(ACCOUNT.username);
+  await page.getByTestId(&quot;account-password&quot;).fill(ACCOUNT.password);
+  await page.getByTestId(&quot;account-login-button&quot;).click();
+  await expect(page.getByTestId(&quot;account-code&quot;)).toBeVisible();
+  await page.getByTestId(&quot;account-code&quot;).fill(authenticatorCode(ACCOUNT.totpSecret));
+  await page.getByTestId(&quot;account-verify-button&quot;).click();
+  await expect(page.getByTestId(&quot;account-status&quot;)).toHaveText(&quot;Signed in as dana&quot;);
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 03</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">API responses disable content-type sniffing</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> Playwright&#39;s `APIResponse.headers()` gives back an object whose keys are all lowercase. The test reads `res.headers()[&quot;X-Content-Type-Options&quot;]`, and that key never exists in the object, so the value is `undefined` no matter what the server sends.</p>
+      <p><b>The fix:</b> Use the lowercase header name, because Playwright&#39;s headers() object always has lowercase keys. The same lookup already works in the first test of this file.</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/security/security.spec.ts</code> <span class="muted">original: tests/security/security.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: &quot;nosniff&quot;
+Received: undefined</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;API responses disable content-type sniffing&quot;, async ({ request }) =&gt; {
+  const res = await request.get(&quot;/api/products&quot;);
+  expect(res.headers()[&quot;X-Content-Type-Options&quot;]).toBe(&quot;nosniff&quot;);
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;API responses disable content-type sniffing&quot;, async ({ request }) =&gt; {
+  const res = await request.get(&quot;/api/products&quot;);
+  expect(res.headers()[&quot;x-content-type-options&quot;]).toBe(&quot;nosniff&quot;);
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 04</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">checkout succeeds for a customer email</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> The test expects a successful order but types &quot;customer@example&quot; as the email. That address has no top-level domain, so it isn&#39;t a valid customer address. The app&#39;s isValidEmail checks email.includes(&quot;.&quot;), and since this string has no dot, the app shows &quot;Please enter a valid email&quot;. Rejecting this address is reasonable, so the mistake is in the test data.</p>
+      <p><b>The fix:</b> Use a valid email address with a domain ending (customer@example.com) so the test checks a real successful checkout.</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/ui/checkout.spec.ts</code> <span class="muted">original: tests/ui/checkout.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(locator).toContainText(expected) failed
+
+Locator: getByTestId(&#39;checkout-message&#39;)
+Expected substring: &quot;Order placed!&quot;
+Received string:    &quot;Please enter a valid email&quot;
+Timeout: 2000ms
+
+Call log:
+  - Expect &quot;toContainText&quot; getByTestId(&#39;checkout-message&#39;) with timeout 2000ms
+  - waiting for getByTestId(&#39;checkout-message&#39;)
+    21 × locator resolved to &lt;p id=&quot;checkout-message&quot; data-testid=&quot;checkout-message&quot;&gt;Please enter a valid email&lt;/p&gt;
+       - unexpected value &quot;Please enter a valid email&quot;
+</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;checkout succeeds for a customer email&quot;, async ({ page }) =&gt; {
+  await addToCart(page, &quot;Notebook&quot;);
+  await page.getByTestId(&quot;email&quot;).fill(&quot;customer@example&quot;);
+  await page.getByTestId(&quot;checkout-button&quot;).click();
+  await expect(page.getByTestId(&quot;checkout-message&quot;)).toContainText(&quot;Order placed!&quot;);
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;checkout succeeds for a customer email&quot;, async ({ page }) =&gt; {
+  await addToCart(page, &quot;Notebook&quot;);
+  await page.getByTestId(&quot;email&quot;).fill(&quot;customer@example.com&quot;);
+  await page.getByTestId(&quot;checkout-button&quot;).click();
+  await expect(page.getByTestId(&quot;checkout-message&quot;)).toContainText(&quot;Order placed!&quot;);
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 05</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">order confirmation shows the customer&#39;s email</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> The steps are in the wrong order. The test fills in the email and submits checkout while the cart is still empty. Only after that does it add &quot;Headphones&quot;. The checkout handler runs once when the form is submitted and finds `cart.length === 0`, so it shows &quot;Your cart is empty&quot;. Adding to the cart afterwards does not re-run checkout, so the message never changes to the confirmation.</p>
+      <p><b>The fix:</b> Add the product to the cart before filling in the email and submitting checkout, so the order is placed with a non-empty cart.</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/ui/checkout.spec.ts</code> <span class="muted">original: tests/ui/checkout.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(locator).toHaveText(expected) failed
+
+Locator:  getByTestId(&#39;checkout-message&#39;)
+Expected: &quot;Order placed! Confirmation sent to dana@example.com&quot;
+Received: &quot;Your cart is empty&quot;
+Timeout:  2000ms
+
+Call log:
+  - Expect &quot;toHaveText&quot; getByTestId(&#39;checkout-message&#39;) with timeout 2000ms
+  - waiting for getByTestId(&#39;checkout-message&#39;)
+    21 × locator resolved to &lt;p id=&quot;checkout-message&quot; data-testid=&quot;checkout-message&quot;&gt;Your cart is empty&lt;/p&gt;
+       - unexpected value &quot;Your cart is empty&quot;
+</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;order confirmation shows the customer&#39;s email&quot;, async ({ page }) =&gt; {
+  await page.getByTestId(&quot;email&quot;).fill(&quot;dana@example.com&quot;);
+  await page.getByTestId(&quot;checkout-button&quot;).click();
+  await addToCart(page, &quot;Headphones&quot;);
+  await expect(page.getByTestId(&quot;checkout-message&quot;)).toHaveText(
+    &quot;Order placed! Confirmation sent to dana@example.com&quot;
+  );
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;order confirmation shows the customer&#39;s email&quot;, async ({ page }) =&gt; {
+  await addToCart(page, &quot;Headphones&quot;);
+  await page.getByTestId(&quot;email&quot;).fill(&quot;dana@example.com&quot;);
+  await page.getByTestId(&quot;checkout-button&quot;).click();
+  await expect(page.getByTestId(&quot;checkout-message&quot;)).toHaveText(
+    &quot;Order placed! Confirmation sent to dana@example.com&quot;
+  );
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 06</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">login succeeds with correct credentials</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> The test calls `locator.textContent()` straight after `click()`. That call reads the text once and never retries. The login request is asynchronous, and the server deliberately waits about 300 ms before answering `/api/login` (the `slowLogin` middleware). At the moment the test reads it, `#login-message` is still empty. The app itself works: with admin / Secret123 the server returns `{ ok: true, message: &quot;Welcome, admin!&quot; }` and app.js writes that into `login-message`. The fix is to use Playwright&#39;s retrying assertion `toHaveText`, which waits until the text appears.</p>
+      <p><b>The fix:</b> Replace the one-off `textContent()` read with Playwright&#39;s retrying `toHaveText` assertion. It keeps checking until the server&#39;s delayed reply has been written into the login message.</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/ui/login.spec.ts</code> <span class="muted">original: tests/ui/login.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: &quot;Welcome, admin!&quot;
+Received: &quot;&quot;</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;login succeeds with correct credentials&quot;, async ({ page }) =&gt; {
+  await page.getByTestId(&quot;username&quot;).fill(&quot;admin&quot;);
+  await page.getByTestId(&quot;password&quot;).fill(&quot;Secret123&quot;);
+  await page.getByTestId(&quot;login-button&quot;).click();
+  const message = await page.getByTestId(&quot;login-message&quot;).textContent();
+  expect(message).toBe(&quot;Welcome, admin!&quot;);
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;login succeeds with correct credentials&quot;, async ({ page }) =&gt; {
+  await page.getByTestId(&quot;username&quot;).fill(&quot;admin&quot;);
+  await page.getByTestId(&quot;password&quot;).fill(&quot;Secret123&quot;);
+  await page.getByTestId(&quot;login-button&quot;).click();
+  await expect(page.getByTestId(&quot;login-message&quot;)).toHaveText(&quot;Welcome, admin!&quot;);
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 07</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">shows product names in the list</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> The test uses the selector getByTestId(&#39;product-title&#39;), and no element in the app has that test id. renderProducts() in site/app.js gives each product name the test id &quot;product-name&quot;. Because the selector matches nothing, the assertion times out with &quot;element(s) not found&quot;.</p>
+      <p><b>The fix:</b> Change the selector to the test id the app really renders, &#39;product-name&#39;. The expected value &#39;Coffee Mug&#39; is already correct because it is the first product returned by /api/products.</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/ui/products.spec.ts</code> <span class="muted">original: tests/ui/products.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(locator).toHaveText(expected) failed
+
+Locator: getByTestId(&#39;product-title&#39;).first()
+Expected: &quot;Coffee Mug&quot;
+Timeout: 2000ms
+Error: element(s) not found
+
+Call log:
+  - Expect &quot;toHaveText&quot; getByTestId(&#39;product-title&#39;).first() with timeout 2000ms
+  - waiting for getByTestId(&#39;product-title&#39;).first()
+</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;shows product names in the list&quot;, async ({ page }) =&gt; {
+  await expect(page.getByTestId(&quot;product-title&quot;).first()).toHaveText(&quot;Coffee Mug&quot;);
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;shows product names in the list&quot;, async ({ page }) =&gt; {
+  await expect(page.getByTestId(&quot;product-name&quot;).first()).toHaveText(&quot;Coffee Mug&quot;);
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+  <details class="ticket">
+    <summary>
+      <span class="ticket-head"><span class="id">TEST 08</span><span class="status-ok">failed → passes</span></span>
+      <span class="ticket-title">shows the correct price for Notebook</span>
+    </summary>
+    <div class="ticket-body">
+      <p><b>What was wrong:</b> The expected value in the test has two digits transposed. The product data defines the Notebook price as 4.75, and renderProducts formats it as `$${p.price.toFixed(2)}`, which gives &quot;$4.75&quot;. The test&#39;s assertion of &quot;$4.57&quot; is wrong.</p>
+      <p><b>The fix:</b> Change the expected price to match the product data (4.75 shown as &quot;$4.75&quot;).</p>
+      <p><b>Repaired copy:</b> <code>tests/healed/ui/products.spec.ts</code> <span class="muted">original: tests/ui/products.spec.ts</span></p>
+      <details class="inner"><summary>original error</summary><pre><code>Error: expect(locator).toHaveText(expected) failed
+
+Locator:  getByTestId(&#39;product-item&#39;).filter({ hasText: &#39;Notebook&#39; }).getByTestId(&#39;product-price&#39;)
+Expected: &quot;$4.57&quot;
+Received: &quot;$4.75&quot;
+Timeout:  2000ms
+
+Call log:
+  - Expect &quot;toHaveText&quot; getByTestId(&#39;product-item&#39;).filter({ hasText: &#39;Notebook&#39; }).getByTestId(&#39;product-price&#39;) with timeout 2000ms
+  - waiting for getByTestId(&#39;product-item&#39;).filter({ hasText: &#39;Notebook&#39; }).getByTestId(&#39;product-price&#39;)
+    21 × locator resolved to &lt;span data-testid=&quot;product-price&quot;&gt;$4.75&lt;/span&gt;
+       - unexpected value &quot;$4.75&quot;
+</code></pre></details>
+      
+  <div class="code-pair">
+    <div><div class="code-title before">before (broken test)</div><pre><code>test(&quot;shows the correct price for Notebook&quot;, async ({ page }) =&gt; {
+  const notebook = page.getByTestId(&quot;product-item&quot;).filter({ hasText: &quot;Notebook&quot; });
+  await expect(notebook.getByTestId(&quot;product-price&quot;)).toHaveText(&quot;$4.57&quot;);
+});</code></pre></div>
+    <div><div class="code-title after">after (AI fix)</div><pre><code>test(&quot;shows the correct price for Notebook&quot;, async ({ page }) =&gt; {
+  const notebook = page.getByTestId(&quot;product-item&quot;).filter({ hasText: &quot;Notebook&quot; });
+  await expect(notebook.getByTestId(&quot;product-price&quot;)).toHaveText(&quot;$4.75&quot;);
+});</code></pre></div>
+  </div>
+      
+    </div>
+  </details>
+</section>
+  
+<section class="sheet">
+  <h2><span class="n">04</span> Graded against the answer key <span class="count">23/23</span></h2>
+  <p class="lead">The bugs and broken tests were planted on purpose and listed in an answer key. The AI never saw it; it is only used afterwards to grade the AI.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>test</th><th>truth</th><th>AI said</th></tr></thead>
+    <tbody>
+      <tr><td class="right">✓</td><td>GET product by id returns that product</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>GET missing product returns 404</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>an expired 2FA code is rejected</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>account page shows the signed-in user after 2FA</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>signing out ends the session on the server</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>browsing stays fast while many users sign in</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>API responses disable content-type sniffing</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>2FA code guessing is blocked after 5 wrong codes</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>error responses do not reveal server internals</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>cart total multiplies price by quantity</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>discount code SAVE10 gives 10% off</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>remove deletes the clicked item</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>quantity cannot go below 1</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>checkout succeeds for a customer email</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>order confirmation shows the customer&#39;s email</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>checkout rejects an email without @</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>login succeeds with correct credentials</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>login fails with a wrong password</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>password field has an accessible label</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>shows product names in the list</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>shows the correct price for Notebook</td><td>test-bug</td><td>test-bug</td></tr><tr><td class="right">✓</td><td>search finds products regardless of capitalization</td><td>app-bug</td><td>app-bug</td></tr><tr><td class="right">✓</td><td>search shows user input as plain text</td><td>app-bug</td><td>app-bug</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted small">app bugs found 15/15 · broken tests found 8/8 · wrong classifications 0</p>
+</section>
+  <footer>generated by ai/report.ts from the Playwright results and the AI's analysis</footer>
+</div>
+</body>
+</html>
