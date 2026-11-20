@@ -31,7 +31,7 @@ Teams that **already have test automation** and lose time on failing runs: decid
 
 ## The product: Faultwise
 
-The AI part of this project is now a separate, private product, **Faultwise**. This repository is the demo and the proof: it installs Faultwise as a package and uses it, like a customer would.
+The AI part of this project is now a separate, private product, **Faultwise**, developed in the [Faultwise organization on GitHub](https://github.com/faultwise). This repository is the demo and the proof: it installs Faultwise as a package and uses it, like a customer would.
 
 What Faultwise does on any project:
 
