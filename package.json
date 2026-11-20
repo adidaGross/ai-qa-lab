@@ -54,6 +54,6 @@
     "node": ">=22"
   },
   "optionalDependencies": {
-    "faultwise": "github:adidaGross/faultwise#v0.2.0"
+    "faultwise": "github:adidaGross/faultwise#v0.2.1"
   }
 }
