@@ -106,7 +106,7 @@ step("Check how the AI will be reached", () => {
   if (!fs.existsSync("node_modules/faultwise/dist/index.js")) {
     console.log("   The Faultwise product package is not installed (it is private). The tests, baseline,");
     console.log("   healed tests and website work without it; the AI steps (npm run verify-fixes,");
-    console.log("   the benchmark's AI phase) need access: https://github.com/adidaGross/faultwise");
+    console.log("   the benchmark's AI phase) need access: https://github.com/faultwise/faultwise");
     return true;
   }
   const claude = spawnSync(isWindows ? "claude.exe" : "claude", ["--version"], { encoding: "utf8" });

@@ -50,7 +50,7 @@ jobs:
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/ai_qa
           chmod 600 ~/.ssh/ai_qa
           git config --global core.sshCommand "ssh -i ~/.ssh/ai_qa -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-          git config --global url."ssh://git@github.com/adidaGross/faultwise.git".insteadOf "https://github.com/adidaGross/faultwise.git"
+          git config --global url."ssh://git@github.com/faultwise/faultwise.git".insteadOf "https://github.com/faultwise/faultwise.git"
 
       - name: Install dependencies
         run: npm ci
