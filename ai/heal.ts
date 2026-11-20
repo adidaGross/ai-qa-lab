@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { playwrightCommand } from "./commands.js";
-import { findTestBlocks } from "ai-qa";
+import { findTestBlocks } from "faultwise";
 import { readFailedTests } from "./read-results.js";
 
 const analysis = JSON.parse(fs.readFileSync("reports/ai-analysis.json", "utf8"));

@@ -19,11 +19,11 @@ const failed = readFailedTests();
 const actual = new Set(failed.map((f) => f.title));
 
 // The healer must be able to cut each failing test out of its file (findTestBlocks in the
-// ai-qa package). Checked here so CI catches it without running the AI. Without access to the
-// private ai-qa package this one check is skipped; the rest of the baseline still runs.
+// Faultwise package). Checked here so CI catches it without running the AI. Without access to the
+// private Faultwise package this one check is skipped; the rest of the baseline still runs.
 const unhealable: string[] = [];
-const aiQa = await import("ai-qa").catch(() => null);
-if (!aiQa) console.log("(Skipping the healer check: the private ai-qa package is not installed.)");
+const aiQa = await import("faultwise").catch(() => null);
+if (!aiQa) console.log("(Skipping the healer check: the private Faultwise package is not installed.)");
 const findTestBlocks = aiQa?.findTestBlocks ?? (() => [{ title: "" }]);
 for (const f of aiQa ? failed : []) {
   try {

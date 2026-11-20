@@ -3,7 +3,7 @@
 //          or:  AI_MODE=api npm run ai:check (the Claude API key)
 
 import { z } from "zod";
-import { askStructured, describeMode } from "ai-qa";
+import { askStructured, describeMode } from "faultwise";
 
 console.log(`Checking: ${describeMode()}`);
 try {

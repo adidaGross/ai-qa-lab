@@ -21,8 +21,8 @@ import { playwrightCommand } from "../ai/commands.js";
 import { cleanSources, writeWorkspace } from "./baseline.js";
 import { generateMutants, sampleMutants, applyMutant, Mutant, Level } from "./mutators.js";
 import { readFailedTests, FailedTest } from "../ai/read-results.js";
-import { buildSystemPrompt, triageFailure, runWithLimit } from "ai-qa";
-import { MODELS, resolveModel } from "ai-qa";
+import { buildSystemPrompt, triageFailure, runWithLimit } from "faultwise";
+import { MODELS, resolveModel } from "faultwise";
 import { QA_SHOP } from "../ai/project.js";
 import { computeMutationMetrics, computeAiMetrics, Judgment } from "./metrics.js";
 

@@ -6,8 +6,8 @@ reports/
 dist/
 .bench/
 
-# ai-qa output and the Python demo environment
-/ai-qa-report/
+# Faultwise output and the Python demo environment
+/faultwise-report/
 examples/**/.venv/
 examples/**/__pycache__/
 examples/**/.pytest_cache/

@@ -5,10 +5,10 @@
 
 import fs from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
-import { describeMode, AI_MODE, MODEL } from "ai-qa";
+import { describeMode, AI_MODE, MODEL } from "faultwise";
 import { QA_SHOP } from "./project.js";
 import { readFailedTests } from "./read-results.js";
-import { buildSystemPrompt, triageFailure, runWithLimit } from "ai-qa";
+import { buildSystemPrompt, triageFailure, runWithLimit } from "faultwise";
 
 const APP_FILES = ["site/index.html", "site/app.js", "src/server.ts", "src/account.ts"];
 const system = buildSystemPrompt(APP_FILES.map((path) => ({ path, content: fs.readFileSync(path, "utf8") })), QA_SHOP);

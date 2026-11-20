@@ -102,11 +102,11 @@ step("Check how the AI will be reached", () => {
   try {
     process.loadEnvFile(".env");
   } catch {}
-  // The AI layer is the private ai-qa product package (an optional dependency)
-  if (!fs.existsSync("node_modules/ai-qa/dist/index.js")) {
-    console.log("   The ai-qa product package is not installed (it is private). The tests, baseline,");
+  // The AI layer is the private Faultwise product package (an optional dependency)
+  if (!fs.existsSync("node_modules/faultwise/dist/index.js")) {
+    console.log("   The Faultwise product package is not installed (it is private). The tests, baseline,");
     console.log("   healed tests and website work without it; the AI steps (npm run verify-fixes,");
-    console.log("   the benchmark's AI phase) need access: https://github.com/adidaGross/ai-qa");
+    console.log("   the benchmark's AI phase) need access: https://github.com/adidaGross/faultwise");
     return true;
   }
   const claude = spawnSync(isWindows ? "claude.exe" : "claude", ["--version"], { encoding: "utf8" });

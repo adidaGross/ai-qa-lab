@@ -29,35 +29,36 @@ Teams that **already have test automation** and lose time on failing runs: decid
 | Tests that break whenever the UI changes | Healed copies of the broken tests, re-run to prove the fix works, kept apart for review |
 | No idea how many bugs the suite would miss | A mutation score and a list of the gaps (see the benchmark) |
 
-## The product: ai-qa
+## The product: Faultwise
 
-The AI part of this project is now a separate, private product, **ai-qa**. This repository is the demo and the proof: it installs ai-qa as a package and uses it, like a customer would.
+The AI part of this project is now a separate, private product, **Faultwise**. This repository is the demo and the proof: it installs Faultwise as a package and uses it, like a customer would.
 
-What ai-qa does on any project:
+What Faultwise does on any project:
 
 - **Reads your test results:** Playwright JSON or JUnit XML, the format almost every framework writes. That covers web (Playwright, Cypress, WebdriverIO, Selenium), mobile (Appium, Espresso, XCUITest), desktop (WinAppDriver/FlaUI through NUnit or xUnit) and server tests (pytest, JUnit, TestNG, Jest, Go, .NET).
 - **Triages every failure:** app bug or broken test, with root cause, evidence, severity and a suggested fix; for Playwright it writes repaired copies of broken tests.
 - **Runs where teams work:** a command line tool and a GitHub Action that puts the report on the run's Summary page.
+- **Built to grow:** Faultwise Triage and Heal today; flaky tests, CI and deployment failures and incidents next, with the same approach: classify the fault, show the evidence, suggest the fix.
 - **Works with any AI:** Claude, a local model through Ollama (the code never leaves the company), or any OpenAI-compatible service.
 
 Measured on a separate pytest project with two planted app bugs and two broken tests, it classified **4/4** correctly with Sonnet. On this repo's 23 failures, the same tool with Sonnet scored **22/23**. Its one miss was a test using the address `customer@example`, which the answer key calls bad test data and the AI called an app bug: a borderline case.
 
-### How ai-qa is offered
+### How Faultwise is offered
 
-ai-qa is sold as a **self-hosted license with support**, priced per company on request.
+Faultwise is sold as a **self-hosted license with support**, priced per company on request.
 
 | | |
 |---|---|
 | Where it runs | In your own CI (GitHub Actions or any CI that runs Node.js) or on your machines. Nothing is hosted by me. |
 | Your code | Stays with you. It goes only to the AI you choose: your own Claude or OpenAI-compatible key, or a local model through Ollama, so it never has to leave the company. |
 | AI costs | Paid directly to your AI vendor, with your own key; a local model costs nothing per run. |
-| What you get | The ai-qa command and GitHub Action, updates, and support with setup on your test suite. |
+| What you get | The Faultwise command and GitHub Action, updates, and support with setup on your test suite. |
 | License | A yearly commercial license agreement. |
 | Price | On request, depending on the number of teams. |
 
 To try it on your project or ask for a price, [contact me on LinkedIn](https://www.linkedin.com/in/adi-gorsky-6319bb14b).
 
-The ai-qa code is private, so `npm install` here skips it if you don't have access. The tests, the baseline check, the healed tests and the website work without it; the AI steps (`npm run verify-fixes`, the benchmark's AI phase) need it.
+The Faultwise code is private, so `npm install` here skips it if you don't have access. The tests, the baseline check, the healed tests and the website work without it; the AI steps (`npm run verify-fixes`, the benchmark's AI phase) need it.
 
 ## Results
 
@@ -238,7 +239,7 @@ Measured by `npm run setup` on GitHub's Ubuntu, macOS and Windows machines (Node
 
 These are fast data-center connections. On a home connection, expect the Chromium download to take longer (the browser uses about 580 MB of disk once unpacked); everything else stays about the same. The latest timings are on the Summary page of every [CI run](https://github.com/adidaGross/ai-qa-lab/actions/workflows/ci.yml).
 
-### Which AI it uses (from the ai-qa package)
+### Which AI it uses (from the Faultwise package)
 
 It is not tied to Claude. Four modes, all returning the same validated JSON, so the rest of the pipeline doesn't know or care which one ran:
 

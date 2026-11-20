@@ -1,7 +1,7 @@
 # GitHub Actions: runs automatically on GitHub's servers on every push and pull request.
 # Free and without AI. It runs on Linux, macOS AND Windows, to prove the project works on all three:
 #   1. "npm run setup", exactly what a new user runs (timed, see the run's Summary page)
-#   2. typecheck (the AI layer comes from the private ai-qa package)
+#   2. typecheck (the AI layer comes from the private Faultwise package)
 #   3. the healed tests (they must all pass)
 # (The AI flow runs only in the "Publish site" workflow, see pages.yml.)
 
@@ -29,9 +29,9 @@ jobs:
         with:
           node-version: 22
 
-      # The AI layer is the private ai-qa package. A read-only deploy key (secret AI_QA_DEPLOY_KEY)
+      # The AI layer is the private Faultwise package. A read-only deploy key (secret AI_QA_DEPLOY_KEY)
       # lets npm download it; it can read that one repository and nothing else.
-      - name: Access the private ai-qa package
+      - name: Access the private Faultwise package
         shell: bash
         env:
           DEPLOY_KEY: ${{ secrets.AI_QA_DEPLOY_KEY }}
@@ -40,7 +40,7 @@ jobs:
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/ai_qa
           chmod 600 ~/.ssh/ai_qa
           git config --global core.sshCommand "ssh -i ~/.ssh/ai_qa -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-          git config --global url."ssh://git@github.com/adidaGross/ai-qa.git".insteadOf "https://github.com/adidaGross/ai-qa.git"
+          git config --global url."ssh://git@github.com/adidaGross/faultwise.git".insteadOf "https://github.com/adidaGross/faultwise.git"
 
       # Same command a new user runs. No npm cache on purpose, so the time is a real first install.
       # Includes: install packages, download Chromium, run the 37 tests, check the expected-failure baseline.
