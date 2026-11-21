@@ -3,71 +3,40 @@
 [![CI](https://github.com/adidaGross/ai-qa-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/adidaGross/ai-qa-lab/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/live%20demo-adidagross.github.io-3b5bff)](https://adidagross.github.io/ai-qa-lab/)
 
-**AI-assisted test automation: an AI that reads failing tests, decides whether the _application_ or the _test_ is wrong, suggests a fix, heals broken tests, and proves the fixes work.**
+I've worked in QA for over nine years, and after almost every test run my teams lost time on the same question: **is this a real bug in the product, or did the test break?** Answering it means reading the error, the test and the app code, one failure at a time.
 
-Built with **TypeScript · Playwright · Claude API (Anthropic)**
+This project is my attempt to hand that question to an AI, and to check its answers instead of trusting them. It has:
+
+- a small online shop with 15 bugs I planted on purpose,
+- 37 Playwright tests for it (UI, API, 2FA and passkey sign-in, security, load), 8 of them broken on purpose,
+- an AI step that decides, for each failing test, whether the app or the test is wrong, suggests a fix, and writes fixed copies of the broken tests, which are then run again,
+- an answer key the AI never sees, and a mutation benchmark that generates new cases to test the AI on.
+
+Built with TypeScript, Playwright and Claude.
 
 ![AI QA report dashboard](docs/images/report-dashboard.png)
 
 ---
 
-## The problem
+## How I approached it
 
-When an automated test fails, a QA engineer's first question is always the same:
+- **Measure the AI, don't trust it.** An answer key and a mutation benchmark turn "the AI seems right" into numbers.
+- **A fixed answer format.** The AI has to answer in a JSON schema checked with Zod. A bad answer fails loudly instead of slipping into the report.
+- **People decide.** Fixed tests go to a separate folder for review. The AI never rewrites the real test suite.
+- **Prove the fix.** A fixed test only counts if it passes when run again.
+- **Test the tests.** CI checks that the suite fails in exactly the expected way. If a planted bug stops being caught, or a new failure shows up, the build goes red.
+- **Safe output.** Report text is escaped, so the report can't have the XSS bug the project tests for. Keys live in a git-ignored `.env` and are typed with hidden input.
+- **Know the cost.** Every AI run prints its estimated cost, and the fixed part of the prompt is cached to keep it down.
+- **Runs anywhere.** Linux, macOS and Windows on every push, and one setup command that times itself.
+- **Not tied to one AI.** One function, four backends (Claude through a subscription or the API, a local model through Ollama, or any OpenAI-compatible service), all checked against the same schema.
 
-> **Is this a real bug in the product, or is the test itself broken?**
+## About the AI part
 
-Answering it takes time: reading the error, the test code and the application code. This project automates that triage with AI, and measures how accurate the AI is instead of just trusting it.
-
-## Who it's for
-
-Teams that **already have test automation** and lose time on failing runs: deciding which failures are real product bugs, which are broken tests, and fixing the broken ones. It does not write a test suite from scratch; it makes an existing one cheaper to maintain and easier to trust.
-
-| You have… | What this gives you |
-|---|---|
-| A suite where failures pile up after every release | Each failure triaged: app bug or test bug, with root cause, evidence and a suggested fix |
-| Tests that break whenever the UI changes | Healed copies of the broken tests, re-run to prove the fix works, kept apart for review |
-| No idea how many bugs the suite would miss | A mutation score and a list of the gaps (see the benchmark) |
-
-## The product: Faultwise
-
-<a href="https://github.com/faultwise"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/faultwise-logo-dark.png">
-  <img src="docs/images/faultwise-logo.png" alt="Faultwise" width="300">
-</picture></a>
-
-The AI part of this project is now a separate, private product, **Faultwise**, developed in the [Faultwise organization on GitHub](https://github.com/faultwise). This repository is the demo and the proof: it installs Faultwise as a package and uses it, like a customer would.
-
-What Faultwise does on any project:
-
-- **Reads your test results:** Playwright JSON or JUnit XML, the format almost every framework writes. That covers web (Playwright, Cypress, WebdriverIO, Selenium), mobile (Appium, Espresso, XCUITest), desktop (WinAppDriver/FlaUI through NUnit or xUnit) and server tests (pytest, JUnit, TestNG, Jest, Go, .NET).
-- **Triages every failure:** app bug or broken test, with root cause, evidence, severity and a suggested fix; for Playwright it writes repaired copies of broken tests.
-- **Runs where teams work:** a command line tool and a GitHub Action that puts the report on the run's Summary page.
-- **Built to grow:** Faultwise Triage and Heal today; flaky tests, CI and deployment failures and incidents next, with the same approach: classify the fault, show the evidence, suggest the fix.
-- **Works with any AI:** Claude, a local model through Ollama (the code never leaves the company), or any OpenAI-compatible service.
-
-Measured on a separate pytest project with two planted app bugs and two broken tests, it classified **4/4** correctly with Sonnet. On this repo's 23 failures, the same tool with Sonnet scored **22/23**. Its one miss was a test using the address `customer@example`, which the answer key calls bad test data and the AI called an app bug: a borderline case.
-
-### How Faultwise is offered
-
-Faultwise is sold as a **self-hosted license with support**, priced per company on request.
-
-| | |
-|---|---|
-| Where it runs | In your own CI (GitHub Actions or any CI that runs Node.js) or on your machines. Nothing is hosted by me. |
-| Your code | Stays with you. It goes only to the AI you choose: your own Claude or OpenAI-compatible key, or a local model through Ollama, so it never has to leave the company. |
-| AI costs | Paid directly to your AI vendor, with your own key; a local model costs nothing per run. |
-| What you get | The Faultwise command and GitHub Action, updates, and support with setup on your test suite. |
-| License | A yearly commercial license agreement. |
-| Price | On request, depending on the number of teams. |
-
-To try it on your project or ask for a price, [contact me on LinkedIn](https://www.linkedin.com/in/adi-gorsky-6319bb14b).
-
-The Faultwise code is private, so `npm install` here skips it if you don't have access. The tests, the baseline check, the healed tests and the website work without it; the AI steps (`npm run verify-fixes`, the benchmark's AI phase) need it.
+The AI code lives in a separate private package, Faultwise, which I'm also developing. This repo installs it like any other dependency. If you don't have access, `npm install` skips it: the tests, the baseline check, the healed tests and the website all work without it. Only the AI steps (`npm run verify-fixes` and the benchmark's AI phase) need it.
 
 ## Results
 
-On a controlled set of **23 seeded failures** (15 planted app bugs + 8 deliberately broken tests), across UI, API, 2FA and passkey sign-in, security and load tests:
+The recorded run has 23 failures: 15 planted app bugs and 8 tests I broke on purpose, across UI, API, 2FA and passkey sign-in, security and load tests.
 
 | Metric | Result |
 |---|---|
@@ -77,11 +46,11 @@ On a controlled set of **23 seeded failures** (15 planted app bugs + 8 deliberat
 | Healed tests passing after the AI fix | **8 / 8** |
 | AI cost per full run | **$0 on a Claude subscription** (API equivalent $1.13); ≈ $0.50 on the Claude API (estimated) |
 
-> These numbers come from a small, controlled demo. Real-world projects are messier and AI answers can vary between runs; that is exactly why the project includes an answer key, a scorer, and the mutation benchmark below.
+> These numbers come from a small demo I control. Real projects are messier, and AI answers vary between runs. That's why I built the answer key, the scorer and the mutation benchmark below.
 
 ## Mutation benchmark
 
-16 hand-picked cases prove little, so [`benchmark/`](benchmark) generates them automatically:
+A couple of dozen hand-made cases don't prove much, so I wrote a generator in [`benchmark/`](benchmark) that makes new ones:
 
 1. Build a **clean baseline**: all planted bugs fixed, all broken tests repaired, so every test passes.
 2. Generate **mutants**: one realistic change each, in the **app** (the truth is *app bug*) or in a **test** (the truth is *test bug*). Sampling is seeded, so every run is reproducible.
@@ -111,9 +80,9 @@ What the benchmark shows:
 
 - **Context matters more than the model.** Opus drops from 100% to 73% without the app's code. Its mistakes have a clear pattern: it **blames the test for subtle app bugs** (a missing `await` was called a test bug 12 times), because without the code a broken page looks like a broken test.
 - **The AI's confidence is honest.** Without the code, Opus was right 19/19 times when it said "high" but only 20/44 when it said "low". So confidence can route uncertain cases to a person.
-- **Sonnet matches Opus here at about half the time and cost**: a data-driven argument for the cheaper model on this task.
+- **Sonnet matches Opus here at about half the time and cost**, so on this task the cheaper model is the better choice.
 - **Haiku's weakness is reliability, not judgment**: with the code it was right 96% of the time when it answered, but it failed to produce valid structured output for a third of the failures.
-- **Mutation score: 72.7% (hard) and 66.7% (basic).** The tests miss real changes. For example, removing the "−" button's click handler is not caught, because the test expects quantity 1, which a dead button also produces. *These gaps are left in on purpose, to demonstrate that the benchmark detects weaknesses in the test suite, not only in the app.*
+- **Mutation score: 72.7% (hard) and 66.7% (basic).** The tests miss real changes. For example, removing the "−" button's click handler is not caught, because the test expects quantity 1, which a dead button also produces. I left these gaps in on purpose, to show that the benchmark finds weak spots in the tests, not only in the app.
 
 ### Results: basic level (60 mutants → 64 test failures, each judged by 5 configurations)
 
@@ -244,7 +213,7 @@ Measured by `npm run setup` on GitHub's Ubuntu, macOS and Windows machines (Node
 
 These are fast data-center connections. On a home connection, expect the Chromium download to take longer (the browser uses about 580 MB of disk once unpacked); everything else stays about the same. The latest timings are on the Summary page of every [CI run](https://github.com/adidaGross/ai-qa-lab/actions/workflows/ci.yml).
 
-### Which AI it uses (from the Faultwise package)
+### Which AI it uses
 
 It is not tied to Claude. Four modes, all returning the same validated JSON, so the rest of the pipeline doesn't know or care which one ran:
 
@@ -302,7 +271,7 @@ GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on 
 
 The setup timings appear on each run's Summary page.
 
-**The first three-system run found a flaky test.** On macOS and Windows, the deliberately broken test with a missing wait (TEST-005) *passed*, because the local server answered before the test read the text. Its failure depended on machine speed. The login now answers after 300 ms, like a real server, so the test fails on every machine ([`src/server.ts`](src/server.ts)).
+**The first run on all three systems found a flaky test.** On macOS and Windows, the deliberately broken test with a missing wait (TEST-005) *passed*, because the local server answered before the test read the text. Its failure depended on machine speed. The login now answers after 300 ms, like a real server, so the test fails on every machine ([`src/server.ts`](src/server.ts)).
 
 Cross-platform details: Playwright and npm are started through Node itself ([`ai/commands.ts`](ai/commands.ts)) rather than `npx`/`npm`, which on Windows are `.cmd` files with different quoting rules, and no script relies on Unix-only shell syntax.
 
@@ -343,18 +312,6 @@ ai-qa-lab/
 ├── answer-key/           # planted bugs and broken tests (never shown to the AI)
 └── playwright.config.ts  # "main" and "healed" test projects
 ```
-
-## Design decisions
-
-- **Measure the AI, don't trust it.** An answer key of planted defects turns "the AI seems smart" into a number.
-- **Structured output.** The AI must answer in a fixed JSON schema (validated with Zod), so the rest of the pipeline can rely on it.
-- **Human-in-the-loop.** Healed tests go to a separate folder; the AI never silently rewrites the real test suite.
-- **Prove the fix.** A suggested fix only counts if the healed test actually passes when run again.
-- **Secrets stay out of git.** The API key lives in `.env` (git-ignored) and is entered with hidden input.
-- **Safe reporting.** All text in the HTML report is escaped, avoiding the same XSS bug the project tests for.
-- **Cost visibility.** Every AI run prints its estimated cost; the system prompt is cached to reduce it.
-- **Runs anywhere.** Linux, macOS and Windows, checked on every push; setup is one command and reports its own time.
-- **Pluggable AI provider.** One `askStructured()` function, four backends: Claude through a subscription or the API, a local model through Ollama, or any OpenAI-compatible service. Every answer is validated against the same schema.
 
 ## Ideas for next steps
 
