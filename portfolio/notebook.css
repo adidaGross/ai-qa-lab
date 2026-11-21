@@ -114,9 +114,6 @@ table.log th { font: 500 13px var(--mono); color: var(--blue); text-align: left;
 table.log td { padding: 8px 0; border-bottom: 1px dashed var(--rule); }
 table.log tr:last-child td { border-bottom: 0; }
 
-.product-logo { display: inline-block; margin: 2px 0 12px; }
-.product-logo img { display: block; width: 260px; max-width: 70vw; height: auto; }
-.offer-head { margin: 22px 0 6px; color: var(--pen); }
 
 /* Findings as tickets */
 .tickets { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }

@@ -16,7 +16,7 @@
     basic: { label: "Basic", desc: "One-line changes such as a flipped condition, a changed number, a wrong selector or a wrong expected value." },
     hard: {
       label: "Hard",
-      desc: "Changes designed to look like the OTHER kind of problem: subtle app bugs (wrong field, boundary, missing await, weakened validation, statement order) and believable test mistakes (checking a real but wrong element, another real product, a plausible wrong number, swapped steps).",
+      desc: "Changes designed to look like the other kind of problem: subtle app bugs (wrong field, boundary, missing await, weakened validation, statement order) and believable test mistakes (checking a real but wrong element, another real product, a plausible wrong number, swapped steps).",
     },
   };
   const data = {};

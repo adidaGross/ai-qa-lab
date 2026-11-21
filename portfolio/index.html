@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI QA Lab</title>
-  <meta name="description" content="A QA automation project: an AI decides whether each failing test is an app bug or a broken test, repairs broken tests, and is measured against an answer key.">
+  <meta name="description" content="A QA automation project: Playwright tests for a demo shop with planted bugs, and an AI that sorts each failure into app bug or broken test, checked against an answer key.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
@@ -23,19 +23,22 @@
       <p class="tag">QA automation · TypeScript · Playwright · Claude</p>
       <h1>When a test fails, is the app wrong or the test?</h1>
       <div class="with-margin">
-        <p class="intro">I've worked in software quality for over nine years: manual and automated testing for web, mobile and desktop apps, building QA processes from scratch, and leading QA and support teams. In my last role I set up Jira Service Management and built two AI support agents with Claude and MCP. In every team I've led, the same question took hours after each test run: is this a real bug, or is the test broken? I built AI QA Lab to see how well an AI can answer that question, and to measure it instead of trusting it.</p>
+        <div>
+        <p class="intro">I've worked in QA for over nine years. I've tested web, mobile and desktop apps, by hand and with automation, built QA processes where there were none, and led QA and support teams. In my last role I also set up Jira Service Management and built two AI support agents with Claude and MCP.</p>
+        <p>In every team I've led, we lost hours after test runs on the same question: is this a real bug, or did the test break? This project is my attempt to hand that question to an AI. I also wanted to check its answers against an answer key instead of taking its word for it.</p>
+        </div>
         <aside class="margin-note">the question every<br>failed run starts with</aside>
       </div>
     </section>
 
     <section class="entry">
-      <h2><span class="n">01</span> Setup</h2>
+      <h2><span class="n">01</span> What I built</h2>
       <ul class="checklist">
-        <li>A small online shop with bugs planted on purpose.</li>
-        <li>A test suite with tests broken on purpose.</li>
-        <li>After every run, the AI reads each failing test, the error and the shop's code, and decides who is at fault.</li>
-        <li>Real bug: it suggests the code fix. Broken test: it writes a corrected copy, which is run again to prove it.</li>
-        <li>An answer key the AI never sees grades every verdict.</li>
+        <li>A small online shop, with bugs I planted on purpose.</li>
+        <li>A Playwright test suite for it, with some tests I broke on purpose.</li>
+        <li>After each run, the AI looks at every failing test, its error and the shop's code, and says which one is at fault.</li>
+        <li>For a real bug, it suggests a code fix. For a broken test, it writes a fixed copy, and that copy is run again to see if it really passes.</li>
+        <li>An answer key, which the AI never sees, grades every answer.</li>
       </ul>
       <div class="result-line">
         <span>latest run:</span>
@@ -48,7 +51,7 @@
 
     <section id="demo" class="entry demo" aria-live="polite">
       <h2><span class="n">02</span> Recorded run</h2>
-      <p>Step by step, as it happened. No AI is called, so it's free to watch. <span class="note" id="recording-note">Loading the recorded run…</span></p>
+      <p>A real run, played back step by step. The replay doesn't call the AI, so you can watch it as often as you like. <span class="note" id="recording-note">Loading the recorded run…</span></p>
       <button id="run-btn" class="stamp" type="button">▶ replay</button>
       <div class="demo-grid">
         <ol class="steps" id="steps">
@@ -69,8 +72,8 @@
     </section>
 
     <section id="results" class="entry results">
-      <h2><span class="n">03</span> The report it writes</h2>
-      <p>Each app bug comes with severity, root cause, evidence and a before/after fix. Each broken test comes with the corrected code.</p>
+      <h2><span class="n">03</span> The report</h2>
+      <p>For each app bug: how serious it is, what caused it, the evidence, and the code before and after the fix. For each broken test: the fixed test code.</p>
       <div class="kpis" id="kpis"></div>
       <div class="report-frame">
         <div class="report-bar">
@@ -82,44 +85,44 @@
     </section>
 
     <section class="entry">
-      <h2><span class="n">04</span> Coverage</h2>
+      <h2><span class="n">04</span> What the tests cover</h2>
       <table class="log">
         <tbody>
-          <tr><th>ui + api</th><td>products, search, cart, discounts, checkout, the product API</td></tr>
-          <tr><th>sign-in</th><td>password + 2FA code, passkeys, saved sessions. The tests compute the 2FA code themselves and use Chromium's virtual authenticator as the passkey device.</td></tr>
-          <tr><th>security</th><td>XSS, security headers, cookie flags, access control, 2FA brute force, leaky error messages</td></tr>
-          <tr><th>load</th><td>many users at once, with limits on response time and errors (each load test gets its own server copy)</td></tr>
-          <tr><th>platforms</th><td>CI runs everything on Linux, macOS and Windows. <code>npm run setup</code> goes from a fresh clone to a passing setup in about a minute.</td></tr>
+          <tr><th>ui + api</th><td>products, search, cart, discounts, checkout, and the product API</td></tr>
+          <tr><th>sign-in</th><td>password with a 2FA code, passkeys, saved sessions. The tests generate the 2FA codes themselves and use Chromium's virtual authenticator in place of a real passkey device.</td></tr>
+          <tr><th>security</th><td>XSS, security headers, cookie flags, access control, 2FA brute force, and error messages that give away too much</td></tr>
+          <tr><th>load</th><td>many users at the same time, with limits on response time and error rate. Each load test starts its own copy of the server, so they don't affect each other.</td></tr>
+          <tr><th>platforms</th><td>CI runs everything on Linux, macOS and Windows. <code>npm run setup</code> takes a fresh clone to a working setup in about a minute.</td></tr>
         </tbody>
       </table>
     </section>
 
     <section class="entry">
-      <h2><span class="n">05</span> Found while building</h2>
-      <p>Not planted. These turned up on their own.</p>
+      <h2><span class="n">05</span> Bugs I didn't plant</h2>
+      <p>These weren't part of the plan. They came up while I was building, and each one changed how the project works.</p>
       <div class="tickets">
         <article class="ticket">
           <header><span class="id">FINDING-01</span><span class="sev">flaky test</span></header>
           <h3>A test that only failed on slow machines</h3>
-          <p>When CI first ran on macOS and Windows, one deliberately broken test passed there. It read the page before the server answered, and on fast machines the server won the race. The fix: the login now responds like a real server.</p>
+          <p>The first time CI ran on macOS and Windows, a test I had broken on purpose passed there. It read the page before the server answered, and on fast machines the server happened to win. I changed the login to respond the way a real server does, so timing no longer decides the result.</p>
           <footer>found by: CI on 3 systems</footer>
         </article>
         <article class="ticket">
           <header><span class="id">FINDING-02</span><span class="sev">masked bug</span></header>
           <h3>A new feature hid an old bug</h3>
-          <p>After the account page was added, <code>getByLabel("Password")</code> found the new password field and stopped noticing that the old one had no label. The test now checks the exact field.</p>
+          <p>Once I added the account page, <code>getByLabel("Password")</code> started finding its new password field, so the test no longer noticed that the old field had no label. The test now points at the exact field.</p>
           <footer>found by: the baseline check</footer>
         </article>
         <article class="ticket">
           <header><span class="id">FINDING-03</span><span class="sev">privacy</span></header>
           <h3>A security test that leaked</h3>
-          <p>The test that checks error messages don't reveal server paths printed the whole response when it failed, copying a local folder path into the test report. It now reports only <em>that</em> something leaked.</p>
+          <p>The test that checks error messages for server paths printed the whole response when it failed, which put a local folder path into the test report. Now it only says <em>that</em> something leaked, not what.</p>
           <footer>found by: reviewing the report before publishing</footer>
         </article>
         <article class="ticket">
           <header><span class="id">FINDING-04</span><span class="sev">tooling</span></header>
           <h3>The repair tool tripped on an apostrophe</h3>
-          <p>The code that cuts a test out of its file got confused by <code>field's</code> in a comment, and later by a regex. CI now checks that every failing test can be found.</p>
+          <p>The code that pulls a single test out of its file got confused by the apostrophe in <code>field's</code> inside a comment, and later by a regex. CI now checks that every failing test can be found in its file.</p>
           <footer>found by: the AI flow failing at step 3</footer>
         </article>
       </div>
@@ -128,7 +131,7 @@
     <section id="benchmark" class="entry bench" hidden>
       <h2><span class="n">06</span> How reliable is it?</h2>
       <div class="with-margin">
-        <p>A handful of planted bugs proves little, so a benchmark generates cases. From a clean copy where every test passes, each <i>mutant</i> adds one small change, to the app (answer: “app bug”) or to a test (“test bug”). The tests run on every mutant, and the AI judges every failure without knowing the answer. The hard level uses changes designed to look like the other kind of problem.</p>
+        <p>A few planted bugs don't prove much, so I wrote a generator that makes new cases. It starts from a clean copy where every test passes. Each <i>mutant</i> adds one small change, either to the app (so the right answer is “app bug”) or to a test (“test bug”). The tests run against every mutant, and the AI judges each failure without seeing the answer. On the hard level, each change is made to look like the other kind of problem.</p>
         <aside class="margin-note">context matters more<br>than model size</aside>
       </div>
       <div class="level-tabs" role="tablist" id="bench-tabs"></div>
@@ -192,31 +195,20 @@
     </section>
 
     <section class="entry">
-      <h2><span class="n">07</span> The product: Faultwise</h2>
-      <a href="https://github.com/faultwise" target="_blank" rel="noopener" class="product-logo"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/images/faultwise-logo-dark.png">
-        <img src="docs/images/faultwise-logo.png" alt="Faultwise" width="260" height="55">
-      </picture></a>
-      <p>The AI part is now its own product, <b>Faultwise</b>. This project installs it as a package and uses it, the way a customer would.</p>
+      <h2><span class="n">07</span> How I approached it</h2>
+      <p>The choices I'd make on a real team, too.</p>
       <table class="log">
         <tbody>
-          <tr><th>reads</th><td>Playwright JSON and JUnit XML, which almost every framework writes: pytest, JUnit/TestNG, Jest, Cypress, Appium, Espresso, .NET, Go. So web, mobile, desktop and server tests.</td></tr>
-          <tr><th>runs as</th><td>a command line tool, or a GitHub Action that puts the report on the run's page</td></tr>
-          <tr><th>any AI</th><td>Claude, a local model through Ollama for code that can't leave the company, or any OpenAI-compatible service</td></tr>
-          <tr><th>next</th><td>built to grow: Triage and Heal today; flaky tests, CI and deployment failures, and incidents next</td></tr>
-          <tr><th>measured</th><td>4/4 on a separate pytest project; 22/23 on this repo's failures with Sonnet (the one miss is a borderline case)</td></tr>
+          <tr><th>measure it</th><td>An answer key and the mutation benchmark turn “the AI seems right” into numbers I can check.</td></tr>
+          <tr><th>fixed format</th><td>The AI has to answer in a fixed JSON format, checked with Zod. A bad answer fails loudly instead of slipping into the report.</td></tr>
+          <tr><th>people decide</th><td>Fixed tests go to a separate folder for review. The AI never rewrites the real test suite.</td></tr>
+          <tr><th>prove the fix</th><td>A fixed test only counts if it passes when run again.</td></tr>
+          <tr><th>safe output</th><td>All text in the report is escaped, so it can't have the XSS bug the project tests for. Keys stay in a git-ignored file.</td></tr>
+          <tr><th>cost</th><td>Every AI run prints what it would cost, and the fixed part of the prompt is cached to keep that down.</td></tr>
         </tbody>
       </table>
-      <h3 class="offer-head">how it's offered</h3>
-      <table class="log">
-        <tbody>
-          <tr><th>license</th><td>self-hosted: a yearly commercial license with updates and setup support</td></tr>
-          <tr><th>your code</th><td>runs in your own CI and goes only to the AI you choose (your own key, or a local model), so it never has to leave the company</td></tr>
-          <tr><th>price</th><td>on request, per company</td></tr>
-          <tr><th>contact</th><td><a href="https://www.linkedin.com/in/adi-gorsky-6319bb14b" target="_blank" rel="noopener">LinkedIn ↗</a> to try it on your project or ask for a price</td></tr>
-        </tbody>
-      </table>
-      <p>Every command and design decision: <a href="{{REPO_URL}}#readme" target="_blank" rel="noopener">README on GitHub ↗</a></p>
+      <p>The AI part lives in a separate private package, Faultwise, which I'm also developing. This repo installs it like any other dependency. Without access you can still clone the repo, run all the tests and build this site.</p>
+      <p>Every command and design decision is in the <a href="{{REPO_URL}}#readme" target="_blank" rel="noopener">README on GitHub ↗</a></p>
     </section>
   </main>
 
